@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+:root {
+  /* ── Typography ─────────────────────────── */
+  --font-size-display: 36px;
+  --font-size-h1:      18px;
+  --font-size-h2:      14px;
+  --font-size-body:    13px;
+  --font-size-small:   12px;
+  --font-size-label:   11px;
+  --font-size-caption: 10px;
+
+  /* ── Background layers ──────────────────── */
+  --color-bg:          #0F0F0F;
+  --color-surface:     #202020;
+  --color-elevated:    #252525;
+  --color-border:      #2A2A2A;
+  --color-hover:       #2F2F2F;
+
+  /* ── Text ───────────────────────────────── */
+  --color-text-primary:   #FFFFFF;
+  --color-text-secondary: #D4D4D4;
+  --color-text-muted:     #A0A0A0;
+  --color-text-disabled:  #454545;
+
+  /* ── Accent ─────────────────────────────── */
+  --color-accent:        #3B82F6;
+  --color-accent-hover:  #2563EB;
+  --color-accent-subtle: rgba(59, 130, 246, 0.15);
+
+  /* ── Status ─────────────────────────────── */
+  --color-success:    #22C55E;
+  --color-warning:    #F59E0B;
+  --color-danger:     #EF4444;
+  --color-success-bg: rgba(34,  197, 94,  0.12);
+  --color-warning-bg: rgba(245, 158, 11,  0.12);
+  --color-danger-bg:  rgba(239, 68,  68,  0.12);
+
+  /* ── 三桶金品牌色 ────────────────────────── */
+  --color-short: #3B82F6;
+  --color-mid:   #8B5CF6;
+  --color-long:  #F97316;
+
+  /* ── Spacing ─────────────────────────────── */
+  --space-page:    16px;
+  --space-section: 20px;
+  --space-card:    16px;
+  --space-item:    12px;
+  --space-tight:    8px;
+  --space-xs:       4px;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: var(--font-size-body);
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input[type="range"] {
+  accent-color: #3b82f6;
+}
+
+/* Hide scrollbar but keep scrollable */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Dark select/input base */
+select {
+  color-scheme: dark;
+}
