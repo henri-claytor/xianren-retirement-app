@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Home, DollarSign, Target, TrendingUp, ChevronRight,
   PieChart, TrendingDown, ShieldAlert, BarChart3, History,
-  Wallet, Bell, RefreshCw, Database
+  Wallet, Bell, RefreshCw, Database, BookOpen, Users
 } from 'lucide-react'
 
 // ── Dark theme tokens ──────────────────────────────────────────
@@ -55,6 +55,20 @@ const TABS = [
       { to: '/b3', label: 'B3 警戒水位', icon: Bell },
       { to: '/b4', label: 'B4 再平衡', icon: RefreshCw },
     ],
+  },
+  {
+    id: 'content',
+    label: '內容',
+    icon: BookOpen,
+    defaultPath: '/c1',
+    paths: ['/c1'],
+  },
+  {
+    id: 'community',
+    label: '社團',
+    icon: Users,
+    defaultPath: '/c2',
+    paths: ['/c2'],
   },
 ]
 

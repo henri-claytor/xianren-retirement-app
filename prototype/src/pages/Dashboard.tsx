@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { DollarSign, PieChart, TrendingDown, Target, ShieldAlert, BarChart3, History } from 'lucide-react'
+import { DollarSign, PieChart, TrendingDown, Target, ShieldAlert, BarChart3, History, BookOpen, Users } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { fmtTWD, StatCard } from '../components/Layout'
 
@@ -11,6 +11,8 @@ const tools = [
   { to: '/a2', code: 'A2', label: '退休壓力測試', desc: 'Monte Carlo 模擬，評估退休成功機率', icon: ShieldAlert, color: 'text-red-400 bg-red-900/30' },
   { to: '/a3', code: 'A3', label: '資產配置建議', desc: '依退休年限給出三桶金比例建議', icon: BarChart3, color: 'text-teal-400 bg-teal-900/30' },
   { to: '/a4', code: 'A4', label: '定期資產追蹤', desc: '記錄每期資產快照，追蹤退休進度', icon: History, color: 'text-[#D4D4D4] bg-[#2A2A2A]' },
+  { to: '/c1', code: 'C1', label: '退休知識', desc: '精選退休財務、稅務、生活規劃文章', icon: BookOpen, color: 'text-sky-400 bg-sky-900/30' },
+  { to: '/c2', code: 'C2', label: '退休社團', desc: '同齡族群交流退休心得與生活經驗', icon: Users, color: 'text-rose-400 bg-rose-900/30' },
 ]
 
 export default function Dashboard() {

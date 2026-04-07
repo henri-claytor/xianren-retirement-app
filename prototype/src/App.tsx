@@ -12,6 +12,8 @@ import B1WithdrawalPlan from './pages/B1WithdrawalPlan'
 import B2CashflowTimeline from './pages/B2CashflowTimeline'
 import B3AlertThresholds from './pages/B3AlertThresholds'
 import B4Rebalancing from './pages/B4Rebalancing'
+import C1ContentFeed from './pages/C1ContentFeed'
+import C2CommunityFeed from './pages/C2CommunityFeed'
 
 export default function App() {
   return (
@@ -30,6 +32,8 @@ export default function App() {
           <Route path="b2" element={<B2CashflowTimeline />} />
           <Route path="b3" element={<B3AlertThresholds />} />
           <Route path="b4" element={<B4Rebalancing />} />
+          <Route path="c1" element={<C1ContentFeed />} />
+          <Route path="c2" element={<C2CommunityFeed />} />
         </Route>
       </Routes>
     </BrowserRouter>
