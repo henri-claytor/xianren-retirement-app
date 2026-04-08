@@ -1,1 +1,4 @@
 .vercel
+android/node_modules/
+android/dist/
+android/.expo/
