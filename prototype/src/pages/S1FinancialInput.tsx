@@ -23,9 +23,9 @@ function numInput(val: number, onChange: (v: number) => void, { prefix = '', suf
         inputMode="numeric"
         value={displayVal}
         onChange={e => handleChange(e.target.value)}
-        className="bg-[#252525] text-white border border-[#2A2A2A] rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="bg-[#252525] text-white border border-[#2A2A2A] rounded-lg px-3 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
-      {suffix && <span className="text-sm text-[#A0A0A0]">{suffix}</span>}
+      {suffix && <span className="text-xs text-[#A0A0A0]">{suffix}</span>}
     </div>
   )
 }
@@ -37,7 +37,7 @@ function textInput(val: string, onChange: (v: string) => void, placeholder = '')
       value={val}
       placeholder={placeholder}
       onChange={e => onChange(e.target.value)}
-      className="bg-[#252525] text-white border border-[#2A2A2A] rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+      className="bg-[#252525] text-white border border-[#2A2A2A] rounded-lg px-3 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
     />
   )
 }
@@ -167,7 +167,7 @@ export default function S1FinancialInput() {
 
       <div className="px-4 py-2 space-y-3 pb-24">
         {/* 即時摘要 */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           <StatCard label="月收入合計" value={fmtTWD(s.monthlyIncome, true)} color="blue" />
           <StatCard label="月支出合計" value={fmtTWD(s.monthlyExpense, true)} color="amber" />
           <StatCard label="可投資資產" value={fmtTWD(s.investableAssets, true)} color="purple" />
@@ -181,19 +181,19 @@ export default function S1FinancialInput() {
             <Card className="rounded-t-none border-t-0 p-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">姓名</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">姓名</label>
                   {textInput(data.name, v => updateData({ name: v }), '嫺人')}
                 </div>
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">目前年齡</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">目前年齡</label>
                   {numInput(data.currentAge, v => updateData({ currentAge: v }), { suffix: '歲' })}
                 </div>
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">預計退休年齡</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">預計退休年齡</label>
                   {numInput(data.retirementAge, v => updateData({ retirementAge: v }), { suffix: '歲' })}
                 </div>
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">預期壽命</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">預期壽命</label>
                   {numInput(data.expectedLifespan, v => updateData({ expectedLifespan: v }), { suffix: '歲' })}
                 </div>
               </div>
@@ -208,27 +208,27 @@ export default function S1FinancialInput() {
             <Card className="rounded-t-none border-t-0 p-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">月薪</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">月薪</label>
                   {numInput(data.salary, v => updateData({ salary: v }))}
                 </div>
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">薪資成長率（年）</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">薪資成長率（年）</label>
                   {numInput(data.salaryGrowthRate, v => updateData({ salaryGrowthRate: v }), { suffix: '%' })}
                 </div>
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">租金收入</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">租金收入</label>
                   {numInput(data.rentalIncome, v => updateData({ rentalIncome: v }))}
                 </div>
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">兼職/其他收入</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">兼職/其他收入</label>
                   {numInput(data.sideIncome, v => updateData({ sideIncome: v }))}
                 </div>
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">勞保月退（退休後）</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">勞保月退（退休後）</label>
                   {numInput(data.laborPension, v => updateData({ laborPension: v }))}
                 </div>
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">勞退月退（退休後）</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">勞退月退（退休後）</label>
                   {numInput(data.laborRetirementFund, v => updateData({ laborRetirementFund: v }))}
                 </div>
               </div>
@@ -292,15 +292,15 @@ export default function S1FinancialInput() {
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <label className="text-xs text-[#A0A0A0] block mb-1">月金額</label>
+                        <label className="text-xs text-[#D4D4D4] block mb-1">月金額</label>
                         {numInput(item.amount, v => updateTransitional(item.id, 'amount', v))}
                       </div>
                       <div>
-                        <label className="text-xs text-[#A0A0A0] block mb-1">起（歲）</label>
+                        <label className="text-xs text-[#D4D4D4] block mb-1">起（歲）</label>
                         {numInput(item.startAge, v => updateTransitional(item.id, 'startAge', v))}
                       </div>
                       <div>
-                        <label className="text-xs text-[#A0A0A0] block mb-1">止（歲）</label>
+                        <label className="text-xs text-[#D4D4D4] block mb-1">止（歲）</label>
                         {numInput(item.endAge, v => updateTransitional(item.id, 'endAge', v))}
                       </div>
                     </div>
@@ -335,15 +335,15 @@ export default function S1FinancialInput() {
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         <div>
-                          <label className="text-xs text-[#A0A0A0] block mb-1">月付金額</label>
+                          <label className="text-xs text-[#D4D4D4] block mb-1">月付金額</label>
                           {numInput(item.monthlyPayment, v => updateLiability(item.id, 'monthlyPayment', v))}
                         </div>
                         <div>
-                          <label className="text-xs text-[#A0A0A0] block mb-1">剩餘期數（月）</label>
+                          <label className="text-xs text-[#D4D4D4] block mb-1">剩餘期數（月）</label>
                           {numInput(item.remainingMonths, v => updateLiability(item.id, 'remainingMonths', v))}
                         </div>
                         <div>
-                          <p className="text-xs text-[#A0A0A0] mb-1">預計還清</p>
+                          <p className="text-xs text-[#D4D4D4] mb-1">預計還清</p>
                           <p className="text-sm font-semibold text-[#E0E0E0]">{clearLabel}</p>
                         </div>
                       </div>
@@ -370,7 +370,7 @@ export default function S1FinancialInput() {
                   { label: '其他資產', key: 'otherAssets' as const, bucket: '長期桶', bucketColor: 'text-orange-400 bg-orange-900/30' },
                 ].map(item => (
                   <div key={item.key}>
-                    <label className="text-xs text-[#A0A0A0] mb-1 flex items-center gap-1.5">
+                    <label className="text-xs text-[#D4D4D4] mb-1 flex items-center gap-1.5">
                       {item.label}
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${item.bucketColor}`}>{item.bucket}</span>
                     </label>
@@ -418,7 +418,7 @@ export default function S1FinancialInput() {
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">搜尋代號/名稱</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">搜尋代號/名稱</label>
                             <StockSearch
                               value={stock.symbol}
                               market={stock.market}
@@ -429,23 +429,27 @@ export default function S1FinancialInput() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">名稱</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">名稱</label>
                             {textInput(stock.name, v => updateStock(stock.id, 'name', v))}
                           </div>
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">股數</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">股數</label>
                             {numInput(stock.shares, v => updateStock(stock.id, 'shares', v))}
                           </div>
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">現價 ({stock.currency})</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">現價 ({stock.currency})</label>
                             {numInput(stock.currentPrice, v => updateStock(stock.id, 'currentPrice', v))}
+                          </div>
+                          <div>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">成本均價 ({stock.currency})</label>
+                            {numInput(stock.costPrice, v => updateStock(stock.id, 'costPrice', v))}
                           </div>
                         </div>
                         <div className="flex items-center justify-between pt-1 border-t border-[#2A2A2A]">
                           <span className="text-xs text-[#A0A0A0]">市值</span>
                           <div className="flex items-center gap-3">
                             <span className="text-xs font-semibold text-[#E0E0E0]">{fmtTWD(val, true)}</span>
-                            <span className={`text-xs font-medium ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(1)}%</span>
+                            {stock.costPrice > 0 && <span className={`text-xs font-medium ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(1)}%</span>}
                           </div>
                         </div>
                       </div>
@@ -486,7 +490,7 @@ export default function S1FinancialInput() {
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">搜尋代號/名稱</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">搜尋代號/名稱</label>
                             <StockSearch
                               value={etf.symbol}
                               market={etf.market}
@@ -497,19 +501,23 @@ export default function S1FinancialInput() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">名稱</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">名稱</label>
                             {textInput(etf.name, v => updateETF(etf.id, 'name', v))}
                           </div>
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">股數</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">股數</label>
                             {numInput(etf.shares, v => updateETF(etf.id, 'shares', v))}
                           </div>
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">現價</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">現價</label>
                             {numInput(etf.currentPrice, v => updateETF(etf.id, 'currentPrice', v))}
                           </div>
+                          <div>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">成本均價</label>
+                            {numInput(etf.costPrice, v => updateETF(etf.id, 'costPrice', v))}
+                          </div>
                           <div className="col-span-2">
-                            <label className="text-xs text-[#A0A0A0] block mb-1">債券比例 %</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">債券比例 %</label>
                             {numInput(etf.bondRatio, v => updateData({ etfs: data.etfs.map(e => e.id === etf.id ? { ...e, bondRatio: v, bondRatioMissing: false } : e) }), { suffix: '%' })}
                           </div>
                         </div>
@@ -548,7 +556,7 @@ export default function S1FinancialInput() {
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="col-span-2">
-                            <label className="text-xs text-[#A0A0A0] block mb-1">搜尋基金</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">搜尋基金</label>
                             <StockSearch
                               value={fund.name}
                               type="fund"
@@ -558,7 +566,7 @@ export default function S1FinancialInput() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">幣別</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">幣別</label>
                             <select value={fund.currency} onChange={e => updateFund(fund.id, 'currency', e.target.value as 'TWD' | 'USD')}
                               className="bg-[#252525] text-white border border-[#2A2A2A] rounded-lg px-2 py-1.5 text-xs w-full">
                               <option value="TWD">TWD</option>
@@ -566,15 +574,15 @@ export default function S1FinancialInput() {
                             </select>
                           </div>
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">持有單位數</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">持有單位數</label>
                             {numInput(fund.units, v => updateFund(fund.id, 'units', v))}
                           </div>
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">淨值 (NAV)</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">淨值 (NAV)</label>
                             {numInput(fund.nav, v => updateFund(fund.id, 'nav', v))}
                           </div>
                           <div>
-                            <label className="text-xs text-[#A0A0A0] block mb-1">債券比例 %</label>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">債券比例 %</label>
                             {numInput(fund.bondRatio, v => updateData({ funds: data.funds.map(f => f.id === fund.id ? { ...f, bondRatio: v, bondRatioMissing: false } : f) }), { suffix: '%' })}
                           </div>
                         </div>
@@ -599,11 +607,11 @@ export default function S1FinancialInput() {
             <Card className="rounded-t-none border-t-0 p-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">通膨率（年）</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">通膨率（年）</label>
                   {numInput(data.inflationRate, v => updateData({ inflationRate: v }), { suffix: '%' })}
                 </div>
                 <div>
-                  <label className="text-xs text-[#A0A0A0] mb-1 block">投資報酬率（年）</label>
+                  <label className="text-xs text-[#D4D4D4] mb-1 block">投資報酬率（年）</label>
                   {numInput(data.investmentReturn, v => updateData({ investmentReturn: v }), { suffix: '%' })}
                 </div>
               </div>

@@ -197,8 +197,8 @@ export function StatCard({ label, value, sub, color = 'blue' }: {
   }
   const c = colors[color]
   return (
-    <div className="rounded-xl p-2" style={{ background: c.bg }}>
-      <p className="inline-block font-medium mb-1 px-1.5 py-0.5 rounded-md" style={{ fontSize: 'var(--font-size-label)', background: c.labelBg, color: '#FFFFFF' }}>{label}</p>
+    <div className="rounded-xl px-2 py-1.5" style={{ background: c.bg }}>
+      <p className="inline-block font-medium mb-0.5 px-1.5 py-0.5 rounded-md" style={{ fontSize: 'var(--font-size-label)', background: c.labelBg, color: '#FFFFFF' }}>{label}</p>
       <p className="font-bold" style={{ fontSize: '14px', color: '#FFFFFF' }}>{value}</p>
       {sub && <p className="mt-0.5" style={{ fontSize: 'var(--font-size-label)', color: 'rgba(255,255,255,0.6)' }}>{sub}</p>}
     </div>
