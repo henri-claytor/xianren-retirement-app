@@ -24,4 +24,4 @@
 
 - [x] 4.1 確認三種卡片排版正確，損益計算準確
 - [x] 4.2 `npm run build` 無錯誤
-- [ ] 4.3 `git commit` + `vercel --prod` 部署
+- [x] 4.3 `git commit` + `vercel --prod` 部署

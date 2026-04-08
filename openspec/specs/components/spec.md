@@ -173,6 +173,37 @@ Dashboard 工具清單在分區標題模式下 SHALL 使用分區標題元件。
 
 ---
 
+### SectionHeader（S1 專屬）
+
+```
+┌────────────────────────────────────────────────────┐
+│ [icon] ① 分區名稱           小計金額  [ChevronUp▲] │  ← bg #252525, rounded-xl
+└────────────────────────────────────────────────────┘
+```
+
+| 屬性 | 規格 |
+|------|------|
+| 背景 | `#252525` |
+| 圓角 | `rounded-xl`（展開時底部直角） |
+| 字型 | 13px / semibold / white |
+| Icon size | 14px |
+| 小計字型 | 13px / `var(--color-text-muted)` |
+| 箭頭 | ChevronUp（展開）/ ChevronDown（收起），14px |
+
+#### Scenario: 標題列內容
+- **WHEN** SectionHeader 渲染
+- **THEN** 顯示：左側 icon + 編號 + 分區名稱；右側顯示小計金額（若有）+ 展開/收起箭頭
+
+#### Scenario: 折疊箭頭方向
+- **WHEN** 分區展開
+- **THEN** 箭頭朝上（ChevronUp）；收起時箭頭朝下（ChevronDown）
+
+#### Scenario: 視覺規格
+- **WHEN** SectionHeader 顯示
+- **THEN** 背景 `#252525`，圓角 `rounded-xl`（展開時底部直角），字型 13px/semibold，icon 14px
+
+---
+
 ### Recharts 圖表通用設定
 
 ```typescript
