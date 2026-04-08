@@ -15,10 +15,20 @@
       }
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-asset",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "771291b0-6cf2-40bd-82da-0d664d024c20"
+      }
     }
   }
 }
