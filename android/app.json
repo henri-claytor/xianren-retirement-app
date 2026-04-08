@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "嫺人退休規劃",
+    "slug": "xianren-retirement",
+    "version": "1.0.0",
+    "scheme": "xianren",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0A0A0A",
+    "android": {
+      "package": "com.xianren.retirement",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A0A0A"
+      }
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
