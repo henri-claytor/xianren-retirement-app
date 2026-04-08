@@ -5,7 +5,7 @@
 - [x] 1.3 設定 `android/babel.config.js`，加入 NativeWind babel plugin
 - [x] 1.4 建立 `android/tailwind.config.js`，定義 xianren 顏色 token（surface、text-primary、text-secondary、text-muted、border、blue）
 - [x] 1.5 在 `android/app.json` 設定 `scheme`（expo-router 必要）與 `android.package`
-- [ ] 1.6 確認 `npx expo start` 可在 Android Emulator 或 Expo Go 正常啟動
+- [x] 1.6 確認 `npx expo start` 可在 Android Emulator 或 Expo Go 正常啟動
 
 ## 2. Store 層遷移
 
@@ -13,7 +13,7 @@
 - [x] 2.2 複製 `prototype/src/store/types.ts` → `android/src/store/types.ts`（零改動）
 - [x] 2.3 複製 `prototype/src/store/mockData.ts` → `android/src/store/mockData.ts`（零改動）
 - [x] 2.4 複製 `prototype/src/store/useStore.ts` → `android/src/store/useStore.ts`（localStorage → AsyncStorage 適配）
-- [ ] 2.5 確認 TypeScript 編譯無錯誤（`npx tsc --noEmit`）
+- [x] 2.5 確認 TypeScript 編譯無錯誤（`npx tsc --noEmit`）
 
 ## 3. 共用元件
 
@@ -35,8 +35,8 @@
 
 ## 5. 驗證
 
-- [ ] 5.1 所有路由可切換，無崩潰
-- [ ] 5.2 底部 Tab 切換正常，active 高亮正確
-- [ ] 5.3 StatCard 在 Dashboard 佔位頁顯示正確顏色主題
-- [ ] 5.4 `npx expo export` 無錯誤
-- [ ] 5.5 `git commit` 提交 android/ 初始架構
+- [x] 5.1 所有路由可切換，無崩潰
+- [x] 5.2 底部 Tab 切換正常，active 高亮正確
+- [x] 5.3 StatCard 在 Dashboard 佔位頁顯示正確顏色主題
+- [x] 5.4 `npx expo export` 無錯誤
+- [x] 5.5 `git commit` 提交 android/ 初始架構
