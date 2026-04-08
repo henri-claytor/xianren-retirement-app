@@ -402,18 +402,14 @@ export default function S1FinancialInput() {
                 {data.stocks.length === 0 && <p className="text-xs text-[#A0A0A0] text-center py-3">尚未新增個股</p>}
                 <div className="space-y-2">
                   {data.stocks.map(stock => {
-                    const val = stock.shares * stock.currentPrice * (stock.currency === 'USD' ? s.USD_TWD : 1)
-                    const pnl = ((stock.currentPrice - stock.costPrice) / (stock.costPrice || 1)) * 100
+                    const currencyRate = stock.currency === 'USD' ? s.USD_TWD : 1
+                    const val = stock.shares * stock.currentPrice * currencyRate
+                    const costTotal = stock.costPrice * stock.shares * currencyRate
+                    const pnlAmt = val - costTotal
+                    const pnl = stock.costPrice > 0 ? ((stock.currentPrice - stock.costPrice) / stock.costPrice) * 100 : 0
                     return (
                       <div key={stock.id} className="bg-[#252525] rounded-xl p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <select value={stock.market} onChange={e => updateStock(stock.id, 'market', e.target.value as 'tw' | 'us')}
-                              className="bg-[#303030] text-white border border-[#2A2A2A] rounded-lg px-2 py-1.5 text-xs">
-                              <option value="tw">台股</option>
-                              <option value="us">美股</option>
-                            </select>
-                          </div>
+                        <div className="flex items-center justify-end">
                           <button onClick={() => removeStock(stock.id)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -429,16 +425,12 @@ export default function S1FinancialInput() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-[#D4D4D4] block mb-1">名稱</label>
-                            {textInput(stock.name, v => updateStock(stock.id, 'name', v))}
-                          </div>
-                          <div>
                             <label className="text-xs text-[#D4D4D4] block mb-1">股數</label>
                             {numInput(stock.shares, v => updateStock(stock.id, 'shares', v))}
                           </div>
                           <div>
-                            <label className="text-xs text-[#D4D4D4] block mb-1">現價 ({stock.currency})</label>
-                            {numInput(stock.currentPrice, v => updateStock(stock.id, 'currentPrice', v))}
+                            <label className="text-xs text-[#D4D4D4] block mb-1">名稱</label>
+                            {textInput(stock.name, v => updateStock(stock.id, 'name', v))}
                           </div>
                           <div>
                             <label className="text-xs text-[#D4D4D4] block mb-1">成本均價 ({stock.currency})</label>
@@ -446,11 +438,16 @@ export default function S1FinancialInput() {
                           </div>
                         </div>
                         <div className="flex items-center justify-between pt-1 border-t border-[#2A2A2A]">
-                          <span className="text-xs text-[#A0A0A0]">市值</span>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-[#A0A0A0]">市值</span>
                             <span className="text-xs font-semibold text-[#E0E0E0]">{fmtTWD(val, true)}</span>
-                            {stock.costPrice > 0 && <span className={`text-xs font-medium ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(1)}%</span>}
                           </div>
+                          {stock.costPrice > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs font-medium ${pnlAmt >= 0 ? 'text-green-400' : 'text-red-400'}`}>{pnlAmt >= 0 ? '+' : ''}{fmtTWD(pnlAmt, true)}</span>
+                              <span className={`text-xs font-medium ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(1)}%</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )
@@ -472,20 +469,16 @@ export default function S1FinancialInput() {
                 {data.etfs.length === 0 && <p className="text-xs text-[#A0A0A0] text-center py-3">尚未新增 ETF</p>}
                 <div className="space-y-2">
                   {data.etfs.map(etf => {
-                    const val = etf.shares * etf.currentPrice * (etf.currency === 'USD' ? s.USD_TWD : 1)
+                    const currencyRate = etf.currency === 'USD' ? s.USD_TWD : 1
+                    const val = etf.shares * etf.currentPrice * currencyRate
+                    const costTotal = etf.costPrice * etf.shares * currencyRate
+                    const pnlAmt = val - costTotal
+                    const pnl = etf.costPrice > 0 ? ((etf.currentPrice - etf.costPrice) / etf.costPrice) * 100 : 0
                     const bucket = etf.bondRatio >= 55 ? '中期桶' : '長期桶'
                     const bucketColor = etf.bondRatio >= 55 ? 'text-purple-400 bg-purple-900/30' : 'text-orange-400 bg-orange-900/30'
                     return (
                       <div key={etf.id} className="bg-[#252525] rounded-xl p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <select value={etf.market} onChange={e => updateETF(etf.id, 'market', e.target.value as 'tw' | 'us')}
-                              className="bg-[#303030] text-white border border-[#2A2A2A] rounded-lg px-2 py-1.5 text-xs">
-                              <option value="tw">台股</option>
-                              <option value="us">美股</option>
-                            </select>
-                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${bucketColor}`}>{bucket}</span>
-                          </div>
+                        <div className="flex items-center justify-end">
                           <button onClick={() => removeETF(etf.id)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -501,29 +494,32 @@ export default function S1FinancialInput() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-[#D4D4D4] block mb-1">名稱</label>
-                            {textInput(etf.name, v => updateETF(etf.id, 'name', v))}
-                          </div>
-                          <div>
                             <label className="text-xs text-[#D4D4D4] block mb-1">股數</label>
                             {numInput(etf.shares, v => updateETF(etf.id, 'shares', v))}
                           </div>
                           <div>
-                            <label className="text-xs text-[#D4D4D4] block mb-1">現價</label>
-                            {numInput(etf.currentPrice, v => updateETF(etf.id, 'currentPrice', v))}
+                            <label className="text-xs text-[#D4D4D4] block mb-1">名稱</label>
+                            {textInput(etf.name, v => updateETF(etf.id, 'name', v))}
                           </div>
                           <div>
                             <label className="text-xs text-[#D4D4D4] block mb-1">成本均價</label>
                             {numInput(etf.costPrice, v => updateETF(etf.id, 'costPrice', v))}
                           </div>
-                          <div className="col-span-2">
-                            <label className="text-xs text-[#D4D4D4] block mb-1">債券比例 %</label>
-                            {numInput(etf.bondRatio, v => updateData({ etfs: data.etfs.map(e => e.id === etf.id ? { ...e, bondRatio: v, bondRatioMissing: false } : e) }), { suffix: '%' })}
-                          </div>
                         </div>
                         <div className="flex items-center justify-between pt-1 border-t border-[#2A2A2A]">
-                          <span className="text-xs text-[#A0A0A0]">市值</span>
-                          <span className="text-xs font-semibold text-[#E0E0E0]">{fmtTWD(val, true)}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-[#A0A0A0]">市值</span>
+                            <span className="text-xs font-semibold text-[#E0E0E0]">{fmtTWD(val, true)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {etf.costPrice > 0 && (
+                              <>
+                                <span className={`text-xs font-medium ${pnlAmt >= 0 ? 'text-green-400' : 'text-red-400'}`}>{pnlAmt >= 0 ? '+' : ''}{fmtTWD(pnlAmt, true)}</span>
+                                <span className={`text-xs font-medium ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(1)}%</span>
+                              </>
+                            )}
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${bucketColor}`}>{bucket}</span>
+                          </div>
                         </div>
                       </div>
                     )
@@ -545,17 +541,19 @@ export default function S1FinancialInput() {
                 {data.funds.length === 0 && <p className="text-xs text-[#A0A0A0] text-center py-3">尚未新增基金</p>}
                 <div className="space-y-2">
                   {data.funds.map(fund => {
-                    const val = fund.units * fund.nav * (fund.currency === 'USD' ? s.USD_TWD : 1)
+                    const currencyRate = fund.currency === 'USD' ? s.USD_TWD : 1
+                    const val = fund.units * fund.nav * currencyRate
+                    const pnlAmt = fund.costNav > 0 ? (fund.nav - fund.costNav) * fund.units * currencyRate : 0
+                    const pnlPct = fund.costNav > 0 ? ((fund.nav - fund.costNav) / fund.costNav) * 100 : 0
                     const bucket = fund.bondRatio >= 55 ? '中期桶' : '長期桶'
                     const bucketColor = fund.bondRatio >= 55 ? 'text-purple-400 bg-purple-900/30' : 'text-orange-400 bg-orange-900/30'
                     return (
                       <div key={fund.id} className="bg-[#252525] rounded-xl p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${bucketColor}`}>{bucket}</span>
+                        <div className="flex items-center justify-end">
                           <button onClick={() => removeFund(fund.id)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                          <div className="col-span-2">
+                          <div>
                             <label className="text-xs text-[#D4D4D4] block mb-1">搜尋基金</label>
                             <StockSearch
                               value={fund.name}
@@ -566,6 +564,10 @@ export default function S1FinancialInput() {
                             />
                           </div>
                           <div>
+                            <label className="text-xs text-[#D4D4D4] block mb-1">持有單位數</label>
+                            {numInput(fund.units, v => updateFund(fund.id, 'units', v))}
+                          </div>
+                          <div>
                             <label className="text-xs text-[#D4D4D4] block mb-1">幣別</label>
                             <select value={fund.currency} onChange={e => updateFund(fund.id, 'currency', e.target.value as 'TWD' | 'USD')}
                               className="bg-[#252525] text-white border border-[#2A2A2A] rounded-lg px-2 py-1.5 text-xs w-full">
@@ -574,21 +576,24 @@ export default function S1FinancialInput() {
                             </select>
                           </div>
                           <div>
-                            <label className="text-xs text-[#D4D4D4] block mb-1">持有單位數</label>
-                            {numInput(fund.units, v => updateFund(fund.id, 'units', v))}
-                          </div>
-                          <div>
-                            <label className="text-xs text-[#D4D4D4] block mb-1">淨值 (NAV)</label>
-                            {numInput(fund.nav, v => updateFund(fund.id, 'nav', v))}
-                          </div>
-                          <div>
-                            <label className="text-xs text-[#D4D4D4] block mb-1">債券比例 %</label>
-                            {numInput(fund.bondRatio, v => updateData({ funds: data.funds.map(f => f.id === fund.id ? { ...f, bondRatio: v, bondRatioMissing: false } : f) }), { suffix: '%' })}
+                            <label className="text-xs text-[#D4D4D4] block mb-1">成本淨值</label>
+                            {numInput(fund.costNav, v => updateFund(fund.id, 'costNav', v))}
                           </div>
                         </div>
                         <div className="flex items-center justify-between pt-1 border-t border-[#2A2A2A]">
-                          <span className="text-xs text-[#A0A0A0]">市值</span>
-                          <span className="text-xs font-semibold text-[#E0E0E0]">{fmtTWD(val, true)}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-[#A0A0A0]">市值</span>
+                            <span className="text-xs font-semibold text-[#E0E0E0]">{fmtTWD(val, true)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {fund.costNav > 0 && (
+                              <>
+                                <span className={`text-xs font-medium ${pnlAmt >= 0 ? 'text-green-400' : 'text-red-400'}`}>{pnlAmt >= 0 ? '+' : ''}{fmtTWD(pnlAmt, true)}</span>
+                                <span className={`text-xs font-medium ${pnlPct >= 0 ? 'text-green-400' : 'text-red-400'}`}>{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}%</span>
+                              </>
+                            )}
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${bucketColor}`}>{bucket}</span>
+                          </div>
                         </div>
                       </div>
                     )
