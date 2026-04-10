@@ -62,6 +62,10 @@ export default function A1RetirementGoal() {
   // 達成率
   const achievementRate = adjustedFund > 0 ? (currentAssetsAtRetirement / adjustedFund) * 100 : 0
 
+  // 通膨影響
+  const inflationGap = inflatedMonthlyExpense - monthlyRetireExpense
+  const inflationGapPct = monthlyRetireExpense > 0 ? (inflationGap / monthlyRetireExpense) * 100 : 0
+
   // 圖表資料
   const chartData = useMemo(() => {
     const data = []
@@ -159,6 +163,35 @@ export default function A1RetirementGoal() {
                 className="w-full" />
             </div>
           </div>
+        </Card>
+
+        {/* 通膨影響區塊 */}
+        <Card className="p-3">
+          <h3 className="text-sm font-semibold text-white mb-3">通膨對退休支出的影響</h3>
+          {data.inflationRate === 0 ? (
+            <p className="text-[#A0A0A0] text-xs">通膨率為 0%，退休時月支出與今日相同。</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="bg-[#252525] rounded-xl p-3">
+                  <p className="text-[#A0A0A0] mb-1" style={{ fontSize: 'var(--font-size-label)' }}>今日月支出</p>
+                  <p className="font-bold text-white" style={{ fontSize: '18px' }}>{fmtTWD(monthlyRetireExpense, true)}</p>
+                </div>
+                <div className="bg-red-900/20 rounded-xl p-3 border border-red-800/30">
+                  <p className="text-red-300 mb-1" style={{ fontSize: 'var(--font-size-label)' }}>退休時所需（通膨後）</p>
+                  <p className="font-bold text-red-200" style={{ fontSize: '18px' }}>{fmtTWD(inflatedMonthlyExpense, true)}</p>
+                  <p className="text-red-400 mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
+                    +{fmtTWD(inflationGap, true)}（+{inflationGapPct.toFixed(0)}%）
+                  </p>
+                </div>
+              </div>
+              <p className="text-[#A0A0A0] text-xs bg-[#252525] rounded-lg px-3 py-2">
+                📉 {yearsToRetire} 年後，每月需要多{' '}
+                <span className="text-red-300 font-semibold">{fmtTWD(inflationGap, true)}</span>{' '}
+                才能維持相同生活水準（通膨率 {data.inflationRate}%）
+              </p>
+            </>
+          )}
         </Card>
 
         {/* 每月需儲蓄 */}

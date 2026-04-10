@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Home, DollarSign, Target, TrendingUp, ChevronRight,
-  PieChart, TrendingDown, ShieldAlert, BarChart3, History,
+  PieChart, ShieldAlert, BarChart3, History,
   Wallet, Bell, RefreshCw, Database, BookOpen, Users, Plus,
   type LucideIcon,
 } from 'lucide-react'
@@ -24,11 +24,10 @@ const TABS = [
     label: '共用工具',
     icon: Database,
     defaultPath: '/s1',
-    paths: ['/s1', '/s2', '/s3'],
+    paths: ['/s1', '/s2'],
     subNav: [
       { to: '/s1', label: 'S1 財務輸入', icon: DollarSign },
       { to: '/s2', label: 'S2 三桶金', icon: PieChart },
-      { to: '/s3', label: 'S3 通膨模擬', icon: TrendingDown },
     ],
   },
   {

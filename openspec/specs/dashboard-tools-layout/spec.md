@@ -16,9 +16,9 @@ Dashboard 工具清單 SHALL 支援以 2 欄網格排列，每欄卡片高度緊
 ### Requirement: 方案二 — 分區標題分組
 Dashboard 工具清單 SHALL 依工具分類分組，各組顯示分區標題。
 
-#### Scenario: 三個分區顯示
+#### Scenario: 兩個分區顯示
 - **WHEN** 用戶瀏覽 Dashboard 工具清單
-- **THEN** 工具依序分為「共用工具」（S1–S3）、「退休前」（A1–A4）三個分區，各分區有標題
+- **THEN** 工具依序分為「共用工具」（S1–S2）、「退休前」（A1–A4）兩個分區，各分區有標題；S3 不顯示於 Dashboard 工具清單
 
 #### Scenario: 分區標題樣式
 - **WHEN** 分區標題顯示
@@ -53,3 +53,31 @@ Dashboard 工具清單 SHALL 支援緊湊列表排版，每行高度約 44px，7
 #### Scenario: C1 和 C2 顯示於工具列表
 - **WHEN** 用戶在 Dashboard 查看工具清單
 - **THEN** 工具清單包含「C1 退休知識」和「C2 退休社團」兩個入口，點擊分別跳轉 `/c1` 和 `/c2`
+
+---
+
+## MODIFIED Requirements
+
+### Requirement: 三個分區顯示
+Dashboard 工具清單 SHALL 依工具分類分組，各組顯示分區標題。
+
+#### Scenario: 兩個分區顯示
+- **WHEN** 用戶瀏覽 Dashboard 工具清單
+- **THEN** 工具依序分為「共用工具」（S1–S2）、「退休前」（A1–A4）兩個分區，各分區有標題；S3 不顯示於 Dashboard 工具清單
+
+#### Scenario: 分區標題樣式
+- **WHEN** 分區標題顯示
+- **THEN** 標題字型 11px、顏色 #A0A0A0、左側有顏色裝飾線或 icon 區分分區
+
+## MODIFIED Requirements
+
+### Requirement: 共用工具 sub-navigation
+「共用工具」tab 的 sub-navigation SHALL 只顯示 S1 和 S2 兩個頁籤，移除 S3 通膨模擬。
+
+#### Scenario: sub-nav 顯示兩個頁籤
+- **WHEN** 用戶點擊底部 tab 進入「共用工具」
+- **THEN** 頂部 sub-navigation 只顯示「S1 財務輸入」和「S2 三桶金」兩個頁籤，不顯示「S3 通膨模擬」
+
+#### Scenario: S3 路由保留
+- **WHEN** 用戶直接訪問 `/s3` 路由
+- **THEN** S3InflationSimulator 頁面正常顯示，路由未被移除
