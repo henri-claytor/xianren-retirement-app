@@ -2,7 +2,8 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Home, DollarSign, Target, TrendingUp, ChevronRight,
   PieChart, TrendingDown, ShieldAlert, BarChart3, History,
-  Wallet, Bell, RefreshCw, Database, BookOpen, Users
+  Wallet, Bell, RefreshCw, Database, BookOpen, Users, Plus,
+  type LucideIcon,
 } from 'lucide-react'
 
 // ── Dark theme tokens ──────────────────────────────────────────
@@ -201,6 +202,73 @@ export function StatCard({ label, value, sub, color = 'blue' }: {
       <p className="inline-block font-medium mb-0.5 px-1.5 py-0.5 rounded-md" style={{ fontSize: 'var(--font-size-label)', background: c.labelBg, color: '#FFFFFF' }}>{label}</p>
       <p className="font-bold" style={{ fontSize: '14px', color: '#FFFFFF' }}>{value}</p>
       {sub && <p className="mt-0.5" style={{ fontSize: 'var(--font-size-label)', color: 'rgba(255,255,255,0.6)' }}>{sub}</p>}
+    </div>
+  )
+}
+
+// ── SummaryStrip ──────────────────────────────────────────────
+export interface SummaryItem {
+  label: string
+  value: string
+  color?: 'green' | 'red' | 'blue' | 'amber' | 'purple' | 'default'
+  sub?: string
+  subWarning?: boolean
+}
+
+export function SummaryStrip({ primary, items }: {
+  primary: SummaryItem
+  items: SummaryItem[]
+}) {
+  const primaryColors = {
+    green:   { text: '#86EFAC', sub: '#86EFAC' },
+    red:     { text: '#FCA5A5', sub: '#FCA5A5' },
+    blue:    { text: '#93C5FD', sub: '#93C5FD' },
+    amber:   { text: '#FCD34D', sub: '#FCD34D' },
+    purple:  { text: '#C4B5FD', sub: '#C4B5FD' },
+    default: { text: '#E0E0E0', sub: '#A0A0A0' },
+  }
+  const pc = primaryColors[primary.color ?? 'default']
+  return (
+    <div className="flex items-stretch gap-2 px-4 py-2">
+      {/* Primary metric */}
+      <div className="shrink-0 bg-[#202020] rounded-xl px-3 py-2 min-w-[110px]">
+        <p className="text-[10px] text-[#A0A0A0] mb-0.5">{primary.label}</p>
+        <p className="font-bold text-[17px]" style={{ color: pc.text }}>{primary.value}</p>
+        {primary.sub && (
+          <p className="text-[10px] mt-0.5" style={{ color: primary.subWarning ? '#FB923C' : 'rgba(255,255,255,0.5)' }}>
+            {primary.sub}
+          </p>
+        )}
+      </div>
+      {/* Secondary metrics — scroll on mobile, wrap on desktop */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-none sm:flex-wrap sm:overflow-visible flex-1 items-stretch">
+        {items.map((item, i) => (
+          <div key={i} className="shrink-0 bg-[#1A1A1A] rounded-xl px-3 py-2 min-w-[88px]">
+            <p className="text-[10px] text-[#707070] mb-0.5">{item.label}</p>
+            <p className="font-semibold text-[13px] text-[#D0D0D0]">{item.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── EmptyState ────────────────────────────────────────────────
+export function EmptyState({ icon: Icon, message, onAdd }: {
+  icon: LucideIcon
+  message: string
+  onAdd: () => void
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 py-5 px-4 bg-[#1E1E1E] rounded-xl">
+      <Icon size={20} className="text-[#505050]" />
+      <p className="text-xs text-[#707070]">{message}</p>
+      <button
+        onClick={onAdd}
+        className="flex items-center gap-1.5 text-xs bg-blue-900/30 text-blue-400 px-3 py-1.5 rounded-lg hover:bg-blue-900/50 transition-colors"
+      >
+        <Plus size={12} /> 新增
+      </button>
     </div>
   )
 }

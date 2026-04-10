@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { DollarSign, Plus, Trash2, Save, RotateCcw, ChevronDown, ChevronUp,
   User, TrendingUp, ShoppingCart, CreditCard, Landmark, BarChart3, Settings } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
-import { PageHeader, Card, StatCard, fmtTWD } from '../components/Layout'
+import { PageHeader, Card, SummaryStrip, EmptyState, fmtTWD } from '../components/Layout'
+import type { FinancialSnapshot } from '../store/types'
 import StockSearch from '../components/StockSearch'
 import type { MockStock } from '../store/mockData'
 import type { ExpenseItem, TransitionalExpense, Liability, StockHolding, ETFHolding, FundHolding } from '../store/types'
@@ -42,9 +43,61 @@ function textInput(val: string, onChange: (v: string) => void, placeholder = '')
   )
 }
 
+// ── Accent colours per section ────────────────────────────────
+const ACCENT: Record<string, string> = {
+  basic:       '#6B7280',
+  income:      '#3B82F6',
+  expense:     '#F59E0B',
+  liability:   '#EF4444',
+  assets:      '#8B5CF6',
+  investments: '#22C55E',
+  assumptions: '#6B7280',
+}
+
+// ── Section completion logic ───────────────────────────────────
+type SectionStatus = 'empty' | 'partial' | 'done'
+
+function getSectionStatus(section: string, data: FinancialSnapshot): SectionStatus {
+  switch (section) {
+    case 'basic':
+      if (data.currentAge > 0 && data.retirementAge > 0) return 'done'
+      if (data.currentAge > 0 || data.retirementAge > 0) return 'partial'
+      return 'empty'
+    case 'income':
+      if (data.salary > 0) return 'done'
+      if (data.rentalIncome > 0 || data.sideIncome > 0) return 'partial'
+      return 'empty'
+    case 'expense':
+      if (data.essentialExpenses.length > 0 && data.lifestyleExpenses.length > 0) return 'done'
+      if (data.essentialExpenses.length > 0 || data.lifestyleExpenses.length > 0) return 'partial'
+      return 'empty'
+    case 'liability':
+      return 'done' // optional — always counts as done
+    case 'assets':
+      if (data.cash > 0 && data.otherAssets > 0) return 'done'
+      if (data.cash > 0 || data.fixedDeposit > 0 || data.savingsInsurance > 0 || data.realEstateRental > 0 || data.otherAssets > 0) return 'partial'
+      return 'empty'
+    case 'investments':
+      if (data.stocks.length > 0 || data.etfs.length > 0 || data.funds.length > 0) return 'done'
+      return 'empty'
+    case 'assumptions':
+      return data.inflationRate > 0 && data.investmentReturn > 0 ? 'done' : 'partial'
+    default:
+      return 'empty'
+  }
+}
+
+function StatusIcon({ status }: { status: SectionStatus }) {
+  if (status === 'done')
+    return <span style={{ color: '#22C55E', fontSize: '14px', lineHeight: 1 }}>✓</span>
+  if (status === 'partial')
+    return <span style={{ color: '#3B82F6', fontSize: '13px', lineHeight: 1 }}>◑</span>
+  return <span style={{ color: '#505050', fontSize: '13px', lineHeight: 1 }}>○</span>
+}
+
 // ── SectionHeader (S1 內聯元件) ─────────────────────────────────
 function SectionHeader({
-  icon: Icon, num, title, summary, isOpen, onToggle
+  icon: Icon, num, title, summary, isOpen, onToggle, accentColor, status
 }: {
   icon: React.ComponentType<{ size?: number; className?: string }>
   num: string
@@ -52,6 +105,8 @@ function SectionHeader({
   summary?: string
   isOpen: boolean
   onToggle: () => void
+  accentColor?: string
+  status?: SectionStatus
 }) {
   return (
     <button
@@ -59,14 +114,15 @@ function SectionHeader({
       className={`w-full flex items-center gap-2.5 px-3 py-2.5 bg-[#252525] border border-[#2A2A2A] transition-colors hover:bg-[#2A2A2A] ${
         isOpen ? 'rounded-t-xl border-b-0' : 'rounded-xl'
       }`}
+      style={accentColor ? { borderLeft: `3px solid ${accentColor}` } : undefined}
     >
-      <div className="w-6 h-6 bg-blue-600/20 rounded-md flex items-center justify-center shrink-0">
-        <Icon size={12} className="text-blue-400" />
+      <div className="w-6 h-6 flex items-center justify-center shrink-0">
+        {status ? <StatusIcon status={status} /> : <Icon size={12} className="text-blue-400" />}
       </div>
       <span className="text-[#505050] font-mono shrink-0" style={{ fontSize: '11px' }}>{num}</span>
       <span className="font-semibold text-[#E0E0E0] flex-1 text-left" style={{ fontSize: '13px' }}>{title}</span>
-      {summary && (
-        <span className="text-[#A0A0A0] shrink-0" style={{ fontSize: '11px' }}>{summary}</span>
+      {summary && !isOpen && (
+        <span className="font-semibold text-[#D0D0D0] shrink-0" style={{ fontSize: '11px' }}>{summary}</span>
       )}
       {isOpen ? <ChevronUp size={14} className="text-[#505050] shrink-0" /> : <ChevronDown size={14} className="text-[#505050] shrink-0" />}
     </button>
@@ -161,22 +217,34 @@ export default function S1FinancialInput() {
   const lifestyleRatioWarn = s.lifestyleRatio > 30
   const totalMonthlyLiability = s.monthlyLiability
 
+  const SECTION_IDS = ['basic', 'income', 'expense', 'liability', 'assets', 'investments', 'assumptions']
+  const completedCount = SECTION_IDS.filter(id => getSectionStatus(id, data) === 'done').length
+
   return (
     <div>
       <PageHeader title="S1 財務現況輸入" subtitle="建立你的財務基準，所有工具的資料來源" icon={DollarSign} />
 
+      {/* 即時摘要 Strip */}
+      <SummaryStrip
+        primary={{
+          label: '月結餘',
+          value: fmtTWD(s.monthlySurplus, true),
+          color: s.monthlySurplus >= 0 ? 'green' : 'red',
+          sub: `儲蓄率 ${s.savingsRate.toFixed(0)}%`,
+          subWarning: s.savingsRate < 10,
+        }}
+        items={[
+          { label: '月收入', value: fmtTWD(s.monthlyIncome, true), color: 'blue' },
+          { label: '月支出', value: fmtTWD(s.monthlyExpense, true), color: 'amber' },
+          { label: '可投資資產', value: fmtTWD(s.investableAssets, true), color: 'purple' },
+        ]}
+      />
+
       <div className="px-4 py-2 space-y-3 pb-24">
-        {/* 即時摘要 */}
-        <div className="grid grid-cols-2 gap-1.5">
-          <StatCard label="月收入合計" value={fmtTWD(s.monthlyIncome, true)} color="blue" />
-          <StatCard label="月支出合計" value={fmtTWD(s.monthlyExpense, true)} color="amber" />
-          <StatCard label="可投資資產" value={fmtTWD(s.investableAssets, true)} color="purple" />
-          <StatCard label="月結餘" value={fmtTWD(s.monthlySurplus, true)} sub={`儲蓄率 ${s.savingsRate.toFixed(0)}%`} color={s.monthlySurplus >= 0 ? 'green' : 'red'} />
-        </div>
 
         {/* ① 基本資料 */}
         <div>
-          <SectionHeader icon={User} num="①" title="基本資料" isOpen={openSections.has('basic')} onToggle={() => toggleSection('basic')} />
+          <SectionHeader icon={User} num="①" title="基本資料" isOpen={openSections.has('basic')} onToggle={() => toggleSection('basic')} accentColor={ACCENT.basic} status={getSectionStatus('basic', data)} />
           {openSections.has('basic') && (
             <Card className="rounded-t-none border-t-0 p-3">
               <div className="grid grid-cols-2 gap-3">
@@ -203,7 +271,7 @@ export default function S1FinancialInput() {
 
         {/* ② 月收入 */}
         <div>
-          <SectionHeader icon={TrendingUp} num="②" title="月收入（目前）" summary={fmtTWD(s.monthlyIncome, true)} isOpen={openSections.has('income')} onToggle={() => toggleSection('income')} />
+          <SectionHeader icon={TrendingUp} num="②" title="月收入（目前）" summary={fmtTWD(s.monthlyIncome, true)} isOpen={openSections.has('income')} onToggle={() => toggleSection('income')} accentColor={ACCENT.income} status={getSectionStatus('income', data)} />
           {openSections.has('income') && (
             <Card className="rounded-t-none border-t-0 p-3">
               <div className="grid grid-cols-2 gap-3">
@@ -238,7 +306,7 @@ export default function S1FinancialInput() {
 
         {/* ③ 月支出 */}
         <div>
-          <SectionHeader icon={ShoppingCart} num="③" title="月支出（嫺人三分類法）" summary={fmtTWD(s.monthlyExpense, true)} isOpen={openSections.has('expense')} onToggle={() => toggleSection('expense')} />
+          <SectionHeader icon={ShoppingCart} num="③" title="月支出（嫺人三分類法）" summary={fmtTWD(s.monthlyExpense, true)} isOpen={openSections.has('expense')} onToggle={() => toggleSection('expense')} accentColor={ACCENT.expense} status={getSectionStatus('expense', data)} />
           {openSections.has('expense') && (
             <Card className="rounded-t-none border-t-0 p-3">
               {/* 生活必需 */}
@@ -313,15 +381,17 @@ export default function S1FinancialInput() {
 
         {/* ④ 負債 */}
         <div>
-          <SectionHeader icon={CreditCard} num="④" title="負債" summary={totalMonthlyLiability > 0 ? `月付 ${fmtTWD(totalMonthlyLiability, true)}` : undefined} isOpen={openSections.has('liability')} onToggle={() => toggleSection('liability')} />
+          <SectionHeader icon={CreditCard} num="④" title="負債" summary={totalMonthlyLiability > 0 ? `月付 ${fmtTWD(totalMonthlyLiability, true)}` : undefined} isOpen={openSections.has('liability')} onToggle={() => toggleSection('liability')} accentColor={ACCENT.liability} status={getSectionStatus('liability', data)} />
           {openSections.has('liability') && (
             <Card className="rounded-t-none border-t-0 p-3">
-              <div className="flex justify-end mb-3">
-                <button onClick={addLiability} className="flex items-center gap-1.5 text-xs bg-blue-900/30 text-blue-400 px-3 py-1.5 rounded-lg hover:bg-blue-900/40">
-                  <Plus size={12} /> 新增負債
-                </button>
-              </div>
-              {data.liabilities.length === 0 && <p className="text-xs text-[#A0A0A0] text-center py-4">尚未新增負債</p>}
+              {data.liabilities.length > 0 && (
+                <div className="flex justify-end mb-3">
+                  <button onClick={addLiability} className="flex items-center gap-1.5 text-xs bg-blue-900/30 text-blue-400 px-3 py-1.5 rounded-lg hover:bg-blue-900/40">
+                    <Plus size={12} /> 新增負債
+                  </button>
+                </div>
+              )}
+              {data.liabilities.length === 0 && <EmptyState icon={CreditCard} message="尚未新增負債（如房貸、車貸）" onAdd={addLiability} />}
               <div className="space-y-3">
                 {data.liabilities.map(item => {
                   const clearDate = new Date()
@@ -357,7 +427,7 @@ export default function S1FinancialInput() {
 
         {/* ⑤ 資產（現金與固定類） */}
         <div>
-          <SectionHeader icon={Landmark} num="⑤" title="資產（現金與固定類）" summary={fmtTWD(s.totalAssets, true)} isOpen={openSections.has('assets')} onToggle={() => toggleSection('assets')} />
+          <SectionHeader icon={Landmark} num="⑤" title="資產（現金與固定類）" summary={fmtTWD(s.totalAssets, true)} isOpen={openSections.has('assets')} onToggle={() => toggleSection('assets')} accentColor={ACCENT.assets} status={getSectionStatus('assets', data)} />
           {openSections.has('assets') && (
             <Card className="rounded-t-none border-t-0 p-3">
               <div className="grid grid-cols-2 gap-3">
@@ -384,7 +454,7 @@ export default function S1FinancialInput() {
 
         {/* ⑥ 投資持倉 */}
         <div>
-          <SectionHeader icon={BarChart3} num="⑥" title="投資持倉" summary={fmtTWD(s.investableAssets, true)} isOpen={openSections.has('investments')} onToggle={() => toggleSection('investments')} />
+          <SectionHeader icon={BarChart3} num="⑥" title="投資持倉" summary={fmtTWD(s.investableAssets, true)} isOpen={openSections.has('investments')} onToggle={() => toggleSection('investments')} accentColor={ACCENT.investments} status={getSectionStatus('investments', data)} />
           {openSections.has('investments') && (
             <Card className="rounded-t-none border-t-0 p-3 space-y-4">
 
@@ -399,7 +469,7 @@ export default function S1FinancialInput() {
                     <Plus size={12} /> 新增
                   </button>
                 </div>
-                {data.stocks.length === 0 && <p className="text-xs text-[#A0A0A0] text-center py-3">尚未新增個股</p>}
+                {data.stocks.length === 0 && <EmptyState icon={TrendingUp} message="尚未新增個股" onAdd={addStock} />}
                 <div className="space-y-2">
                   {data.stocks.map(stock => {
                     const currencyRate = stock.currency === 'USD' ? s.USD_TWD : 1
@@ -466,7 +536,7 @@ export default function S1FinancialInput() {
                     <Plus size={12} /> 新增
                   </button>
                 </div>
-                {data.etfs.length === 0 && <p className="text-xs text-[#A0A0A0] text-center py-3">尚未新增 ETF</p>}
+                {data.etfs.length === 0 && <EmptyState icon={BarChart3} message="尚未新增 ETF" onAdd={addETF} />}
                 <div className="space-y-2">
                   {data.etfs.map(etf => {
                     const currencyRate = etf.currency === 'USD' ? s.USD_TWD : 1
@@ -538,7 +608,7 @@ export default function S1FinancialInput() {
                     <Plus size={12} /> 新增
                   </button>
                 </div>
-                {data.funds.length === 0 && <p className="text-xs text-[#A0A0A0] text-center py-3">尚未新增基金</p>}
+                {data.funds.length === 0 && <EmptyState icon={Landmark} message="尚未新增基金" onAdd={addFund} />}
                 <div className="space-y-2">
                   {data.funds.map(fund => {
                     const currencyRate = fund.currency === 'USD' ? s.USD_TWD : 1
@@ -607,7 +677,7 @@ export default function S1FinancialInput() {
 
         {/* ⑦ 計算假設 */}
         <div>
-          <SectionHeader icon={Settings} num="⑦" title="計算假設" isOpen={openSections.has('assumptions')} onToggle={() => toggleSection('assumptions')} />
+          <SectionHeader icon={Settings} num="⑦" title="計算假設" isOpen={openSections.has('assumptions')} onToggle={() => toggleSection('assumptions')} accentColor={ACCENT.assumptions} status={getSectionStatus('assumptions', data)} />
           {openSections.has('assumptions') && (
             <Card className="rounded-t-none border-t-0 p-3">
               <div className="grid grid-cols-2 gap-3">
@@ -627,7 +697,10 @@ export default function S1FinancialInput() {
       </div>
 
       {/* 固定底部儲存列 */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A] border-t border-[#2A2A2A] px-4 py-3 flex gap-3" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A] border-t border-[#2A2A2A] px-4 py-3 flex items-center gap-3" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+        <span className={`text-xs shrink-0 ${completedCount === 7 ? 'text-green-400' : 'text-[#707070]'}`}>
+          {completedCount === 7 ? '已完成 ✓' : `已填 ${completedCount} / 7 分區`}
+        </span>
         <button
           onClick={handleSave}
           className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
