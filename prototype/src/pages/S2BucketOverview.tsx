@@ -134,7 +134,7 @@ export default function S2BucketOverview() {
 
   return (
     <div>
-      <PageHeader title="S2 三桶金總覽" subtitle="依資產類型自動歸桶，分析短中長期資產結構" icon={PieIcon} />
+      <PageHeader title="三桶金總覽" subtitle="依資產類型自動歸桶，分析短中長期資產結構" icon={PieIcon} />
 
       <div className="px-4 py-2 space-y-3">
         {/* 短期桶不足警示 */}

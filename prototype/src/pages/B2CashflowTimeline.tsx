@@ -54,7 +54,7 @@ export default function B2CashflowTimeline() {
 
   return (
     <div>
-      <PageHeader title="B2 現金流時間軸" subtitle="退休後逐年收入來源與投資提領視覺化" icon={TrendingUp} />
+      <PageHeader title="現金流時間軸" subtitle="退休後逐年收入來源與投資提領視覺化" icon={TrendingUp} />
 
       <div className="px-4 py-2 space-y-3">
         {/* 設定 */}

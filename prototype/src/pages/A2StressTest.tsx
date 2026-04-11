@@ -120,7 +120,7 @@ export default function A2StressTest() {
 
   return (
     <div>
-      <PageHeader title="A2 退休壓力測試" subtitle="Monte Carlo 模擬（1000次），評估退休資金成功率" icon={ShieldAlert} />
+      <PageHeader title="退休壓力測試" subtitle="Monte Carlo 模擬（1000次），評估退休資金成功率" icon={ShieldAlert} />
 
       <div className="px-4 py-2 space-y-3">
         {/* 壓力情境快速切換 */}

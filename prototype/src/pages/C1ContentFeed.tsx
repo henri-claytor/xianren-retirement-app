@@ -58,7 +58,7 @@ export default function C1ContentFeed() {
 
   return (
     <div>
-      <PageHeader title="C1 退休知識" subtitle="文章與影音內容精選" icon={BookOpen} />
+      <PageHeader title="退休知識" subtitle="文章與影音內容精選" icon={BookOpen} />
 
       {/* 分類 Tab */}
       <div className="sticky top-0 z-10 bg-[#0F0F0F] border-b border-[#2A2A2A]">

@@ -26,8 +26,8 @@ const TABS = [
     defaultPath: '/s1',
     paths: ['/s1', '/s2'],
     subNav: [
-      { to: '/s1', label: 'S1 財務輸入', icon: DollarSign },
-      { to: '/s2', label: 'S2 三桶金', icon: PieChart },
+      { to: '/s1', label: '財務現況輸入', icon: DollarSign },
+      { to: '/s2', label: '三桶金總覽', icon: PieChart },
     ],
   },
   {
@@ -94,23 +94,23 @@ export default function Layout() {
           <span className="text-[10px] text-[#505050] font-mono">Prototype v1</span>
         </div>
 
-        {/* Sub-navigation pills */}
+        {/* Sub-navigation tabs */}
         {activeTab.subNav && (
-          <div className="flex overflow-x-auto scrollbar-none px-4 pb-2 gap-2">
+          <div className="flex overflow-x-auto scrollbar-none px-4 gap-0 border-b border-[#2A2A2A]">
             {activeTab.subNav.map(item => {
               const isActive = location.pathname === item.to
               return (
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-all ${
+                  className={`shrink-0 flex items-center gap-1.5 px-4 py-2.5 font-medium transition-all border-b-[3px] -mb-px ${
                     isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-[#252525] text-[#A0A0A0] hover:text-white hover:bg-[#303030]'
+                      ? 'border-blue-400 text-white'
+                      : 'border-transparent text-[#707070] hover:text-[#D4D4D4]'
                   }`}
-                  style={{ fontSize: 'var(--font-size-label)' }}
+                  style={{ fontSize: 'var(--font-size-body)' }}
                 >
-                  <item.icon size={11} />
+                  <item.icon size={13} />
                   {item.label}
                 </NavLink>
               )

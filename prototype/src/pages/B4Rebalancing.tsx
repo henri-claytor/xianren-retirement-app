@@ -96,7 +96,7 @@ export default function B4Rebalancing() {
 
   return (
     <div>
-      <PageHeader title="B4 再平衡提醒" subtitle="比對目前三桶金比例與建議，給出操作步驟" icon={RefreshCw} />
+      <PageHeader title="再平衡提醒" subtitle="比對目前三桶金比例與建議，給出操作步驟" icon={RefreshCw} />
 
       <div className="px-4 py-2 space-y-3">
         {/* 目前階段 */}

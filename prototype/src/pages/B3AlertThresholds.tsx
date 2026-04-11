@@ -114,7 +114,7 @@ export default function B3AlertThresholds() {
 
   return (
     <div>
-      <PageHeader title="B3 財務警戒水位" subtitle="設定三桶金最低門檻，即時監控財務健康度" icon={Bell} />
+      <PageHeader title="財務警戒水位" subtitle="設定三桶金最低門檻，即時監控財務健康度" icon={Bell} />
 
       <div className="px-4 py-2 space-y-3">
         {/* 整體狀態 */}

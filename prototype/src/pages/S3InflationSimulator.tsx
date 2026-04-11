@@ -82,7 +82,7 @@ export default function S3InflationSimulator() {
 
   return (
     <div>
-      <PageHeader title="S3 通膨侵蝕模擬器" subtitle="看看不投資 vs 投資，退休金的差距有多大" icon={TrendingDown} />
+      <PageHeader title="通膨侵蝕模擬器" subtitle="看看不投資 vs 投資，退休金的差距有多大" icon={TrendingDown} />
 
       <div className="px-4 py-2 space-y-3">
         {/* 購買力衰退說明 */}

@@ -9,7 +9,7 @@ import type { MockStock } from '../store/mockData'
 import type { ExpenseItem, TransitionalExpense, Liability, StockHolding, ETFHolding, FundHolding } from '../store/types'
 
 function numInput(val: number, onChange: (v: number) => void, { prefix = '', suffix = '', min = 0 } = {}) {
-  const displayVal = val ? val.toLocaleString() : ''
+  const displayVal = val !== 0 ? val.toLocaleString() : '0'
   function handleChange(raw: string) {
     const cleaned = raw.replace(/,/g, '')
     const n = Number(cleaned)
@@ -17,16 +17,16 @@ function numInput(val: number, onChange: (v: number) => void, { prefix = '', suf
     else if (cleaned === '' || cleaned === '-') onChange(0)
   }
   return (
-    <div className="flex items-center gap-1.5">
-      {prefix && <span className="text-sm text-[#A0A0A0]">{prefix}</span>}
+    <div className="relative flex items-center">
+      {prefix && <span className="absolute left-3 text-xs text-[#A0A0A0] pointer-events-none">{prefix}</span>}
       <input
         type="text"
         inputMode="numeric"
         value={displayVal}
         onChange={e => handleChange(e.target.value)}
-        className="bg-[#252525] text-white border border-[#2A2A2A] rounded-lg px-3 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className={`bg-[#606060] text-white border border-[#707070] rounded-lg py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-[#A0A0A0] ${prefix ? 'pl-6 pr-3' : suffix ? 'pl-3 pr-8' : 'px-3'}`}
       />
-      {suffix && <span className="text-xs text-[#A0A0A0]">{suffix}</span>}
+      {suffix && <span className="absolute right-3 text-xs text-[#D4D4D4] font-medium pointer-events-none">{suffix}</span>}
     </div>
   )
 }
@@ -38,7 +38,7 @@ function textInput(val: string, onChange: (v: string) => void, placeholder = '')
       value={val}
       placeholder={placeholder}
       onChange={e => onChange(e.target.value)}
-      className="bg-[#252525] text-white border border-[#2A2A2A] rounded-lg px-3 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+      className="bg-[#606060] text-white border border-[#707070] rounded-lg px-3 py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-[#A0A0A0]"
     />
   )
 }
@@ -109,23 +109,31 @@ function SectionHeader({
   status?: SectionStatus
 }) {
   return (
-    <button
-      onClick={onToggle}
-      className={`w-full flex items-center gap-2.5 px-3 py-2.5 bg-[#252525] border border-[#2A2A2A] transition-colors hover:bg-[#2A2A2A] ${
-        isOpen ? 'rounded-t-xl border-b-0' : 'rounded-xl'
-      }`}
-      style={accentColor ? { borderLeft: `3px solid ${accentColor}` } : undefined}
-    >
-      <div className="w-6 h-6 flex items-center justify-center shrink-0">
-        {status ? <StatusIcon status={status} /> : <Icon size={12} className="text-blue-400" />}
-      </div>
-      <span className="text-[#505050] font-mono shrink-0" style={{ fontSize: '11px' }}>{num}</span>
-      <span className="font-semibold text-[#E0E0E0] flex-1 text-left" style={{ fontSize: '13px' }}>{title}</span>
-      {summary && !isOpen && (
-        <span className="font-semibold text-[#D0D0D0] shrink-0" style={{ fontSize: '11px' }}>{summary}</span>
+    <div className="relative">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2.5 px-1 py-2.5 transition-colors hover:bg-[#1A1A1A] rounded-sm"
+      >
+        <div className="w-6 h-6 flex items-center justify-center shrink-0">
+          {status ? <StatusIcon status={status} /> : <Icon size={12} className="text-blue-400" />}
+        </div>
+        <span className="text-[#505050] font-mono shrink-0" style={{ fontSize: '11px' }}>{num}</span>
+        <span className={`font-semibold flex-1 text-left transition-colors ${isOpen ? 'text-white' : 'text-[#A0A0A0]'}`} style={{ fontSize: '13px' }}>{title}</span>
+        {summary && !isOpen && (
+          <span className="font-semibold text-[#D0D0D0] shrink-0" style={{ fontSize: '11px' }}>{summary}</span>
+        )}
+        {isOpen ? <ChevronUp size={14} className="text-[#505050] shrink-0" /> : <ChevronDown size={14} className="text-[#505050] shrink-0" />}
+      </button>
+      {accentColor && (
+        <div
+          className="absolute bottom-0 left-0 h-[3px] transition-all duration-300"
+          style={{
+            width: isOpen ? '100%' : '32px',
+            backgroundColor: accentColor,
+          }}
+        />
       )}
-      {isOpen ? <ChevronUp size={14} className="text-[#505050] shrink-0" /> : <ChevronDown size={14} className="text-[#505050] shrink-0" />}
-    </button>
+    </div>
   )
 }
 
@@ -222,7 +230,7 @@ export default function S1FinancialInput() {
 
   return (
     <div>
-      <PageHeader title="S1 財務現況輸入" subtitle="建立你的財務基準，所有工具的資料來源" icon={DollarSign} />
+      <PageHeader title="財務現況輸入" subtitle="建立你的財務基準，所有工具的資料來源" icon={DollarSign} />
 
       {/* 即時摘要 Strip */}
       <SummaryStrip
@@ -246,7 +254,7 @@ export default function S1FinancialInput() {
         <div>
           <SectionHeader icon={User} num="①" title="基本資料" isOpen={openSections.has('basic')} onToggle={() => toggleSection('basic')} accentColor={ACCENT.basic} status={getSectionStatus('basic', data)} />
           {openSections.has('basic') && (
-            <Card className="rounded-t-none border-t-0 p-3">
+            <Card className="rounded-xl p-3 mt-1">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-[#D4D4D4] mb-1 block">姓名</label>
@@ -273,7 +281,7 @@ export default function S1FinancialInput() {
         <div>
           <SectionHeader icon={TrendingUp} num="②" title="月收入（目前）" summary={fmtTWD(s.monthlyIncome, true)} isOpen={openSections.has('income')} onToggle={() => toggleSection('income')} accentColor={ACCENT.income} status={getSectionStatus('income', data)} />
           {openSections.has('income') && (
-            <Card className="rounded-t-none border-t-0 p-3">
+            <Card className="rounded-xl p-3 mt-1">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-[#D4D4D4] mb-1 block">月薪</label>
@@ -308,7 +316,7 @@ export default function S1FinancialInput() {
         <div>
           <SectionHeader icon={ShoppingCart} num="③" title="月支出（嫺人三分類法）" summary={fmtTWD(s.monthlyExpense, true)} isOpen={openSections.has('expense')} onToggle={() => toggleSection('expense')} accentColor={ACCENT.expense} status={getSectionStatus('expense', data)} />
           {openSections.has('expense') && (
-            <Card className="rounded-t-none border-t-0 p-3">
+            <Card className="rounded-xl p-3 mt-1">
               {/* 生活必需 */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
@@ -383,7 +391,7 @@ export default function S1FinancialInput() {
         <div>
           <SectionHeader icon={CreditCard} num="④" title="負債" summary={totalMonthlyLiability > 0 ? `月付 ${fmtTWD(totalMonthlyLiability, true)}` : undefined} isOpen={openSections.has('liability')} onToggle={() => toggleSection('liability')} accentColor={ACCENT.liability} status={getSectionStatus('liability', data)} />
           {openSections.has('liability') && (
-            <Card className="rounded-t-none border-t-0 p-3">
+            <Card className="rounded-xl p-3 mt-1">
               {data.liabilities.length > 0 && (
                 <div className="flex justify-end mb-3">
                   <button onClick={addLiability} className="flex items-center gap-1.5 text-xs bg-blue-900/30 text-blue-400 px-3 py-1.5 rounded-lg hover:bg-blue-900/40">
@@ -429,7 +437,7 @@ export default function S1FinancialInput() {
         <div>
           <SectionHeader icon={Landmark} num="⑤" title="資產（現金與固定類）" summary={fmtTWD(s.totalAssets, true)} isOpen={openSections.has('assets')} onToggle={() => toggleSection('assets')} accentColor={ACCENT.assets} status={getSectionStatus('assets', data)} />
           {openSections.has('assets') && (
-            <Card className="rounded-t-none border-t-0 p-3">
+            <Card className="rounded-xl p-3 mt-1">
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: '現金/活存', key: 'cash' as const, bucket: '短期桶', bucketColor: 'text-blue-400 bg-blue-900/30' },
@@ -452,9 +460,9 @@ export default function S1FinancialInput() {
           )}
         </div>
 
-        {/* ⑥ 投資持倉 */}
+        {/* ⑥ 投資部位 */}
         <div>
-          <SectionHeader icon={BarChart3} num="⑥" title="投資持倉" summary={fmtTWD(s.investableAssets, true)} isOpen={openSections.has('investments')} onToggle={() => toggleSection('investments')} accentColor={ACCENT.investments} status={getSectionStatus('investments', data)} />
+          <SectionHeader icon={BarChart3} num="⑥" title="投資部位" summary={fmtTWD(s.investableAssets, true)} isOpen={openSections.has('investments')} onToggle={() => toggleSection('investments')} accentColor={ACCENT.investments} status={getSectionStatus('investments', data)} />
           {openSections.has('investments') && (
             <Card className="rounded-t-none border-t-0 p-3 space-y-4">
 
@@ -640,7 +648,7 @@ export default function S1FinancialInput() {
                           <div>
                             <label className="text-xs text-[#D4D4D4] block mb-1">幣別</label>
                             <select value={fund.currency} onChange={e => updateFund(fund.id, 'currency', e.target.value as 'TWD' | 'USD')}
-                              className="bg-[#252525] text-white border border-[#2A2A2A] rounded-lg px-2 py-1.5 text-xs w-full">
+                              className="bg-[#606060] text-white border border-[#707070] rounded-lg px-2 py-1.5 text-xs w-full">
                               <option value="TWD">TWD</option>
                               <option value="USD">USD</option>
                             </select>
@@ -679,7 +687,7 @@ export default function S1FinancialInput() {
         <div>
           <SectionHeader icon={Settings} num="⑦" title="計算假設" isOpen={openSections.has('assumptions')} onToggle={() => toggleSection('assumptions')} accentColor={ACCENT.assumptions} status={getSectionStatus('assumptions', data)} />
           {openSections.has('assumptions') && (
-            <Card className="rounded-t-none border-t-0 p-3">
+            <Card className="rounded-xl p-3 mt-1">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-[#D4D4D4] mb-1 block">通膨率（年）</label>

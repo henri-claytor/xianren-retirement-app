@@ -43,7 +43,7 @@ export default function A4PeriodicTracking() {
 
   return (
     <div>
-      <PageHeader title="A4 定期資產追蹤" subtitle="每季記錄一次快照，追蹤退休準備進度" icon={History} />
+      <PageHeader title="定期資產追蹤" subtitle="每季記錄一次快照，追蹤退休準備進度" icon={History} />
 
       <div className="px-4 py-2 space-y-3">
         {/* 目前狀態 + 記錄按鈕 */}

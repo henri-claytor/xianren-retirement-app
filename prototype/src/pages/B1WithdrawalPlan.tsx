@@ -53,7 +53,7 @@ export default function B1WithdrawalPlan() {
 
   return (
     <div>
-      <PageHeader title="B1 提領計畫試算" subtitle="三桶金提領順序模擬，預測各桶耗盡時間" icon={Wallet} />
+      <PageHeader title="提領計畫試算" subtitle="三桶金提領順序模擬，預測各桶耗盡時間" icon={Wallet} />
 
       <div className="px-4 py-2 space-y-3">
         {/* 狀態卡 */}

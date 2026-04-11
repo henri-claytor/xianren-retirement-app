@@ -99,7 +99,7 @@ function PostCard({ post }: { post: Post }) {
 export default function C2CommunityFeed() {
   return (
     <div>
-      <PageHeader title="C2 退休社團" subtitle="同齡族群交流退休心得" icon={Users} />
+      <PageHeader title="退休社團" subtitle="同齡族群交流退休心得" icon={Users} />
 
       <div className="px-4 py-3 space-y-3">
         {/* 社團公告 */}

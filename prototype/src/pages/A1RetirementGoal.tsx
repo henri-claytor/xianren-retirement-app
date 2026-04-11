@@ -85,7 +85,7 @@ export default function A1RetirementGoal() {
 
   return (
     <div>
-      <PageHeader title="A1 退休目標計算" subtitle="計算退休所需資金與每月儲蓄目標（4% 法則）" icon={Target} />
+      <PageHeader title="退休目標計算" subtitle="計算退休所需資金與每月儲蓄目標（4% 法則）" icon={Target} />
 
       <div className="px-4 py-2 space-y-3">
         {/* 達成率 */}

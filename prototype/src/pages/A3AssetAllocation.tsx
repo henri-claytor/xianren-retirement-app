@@ -81,7 +81,7 @@ export default function A3AssetAllocation() {
 
   return (
     <div>
-      <PageHeader title="A3 資產配置建議" subtitle="依距退休年數，給出三桶金建議比例與調整方向" icon={BarChart3} />
+      <PageHeader title="資產配置建議" subtitle="依距退休年數，給出三桶金建議比例與調整方向" icon={BarChart3} />
 
       <div className="px-4 py-2 space-y-3">
         {/* 目前階段 */}
