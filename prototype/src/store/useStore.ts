@@ -43,7 +43,7 @@ export function useStore() {
   useEffect(() => {
     const fn = () => rerender(n => n + 1)
     _listeners.add(fn)
-    return () => _listeners.delete(fn)
+    return () => { _listeners.delete(fn) }
   }, [])
 
   const updateData = useCallback((updates: Partial<FinancialSnapshot>) => {
