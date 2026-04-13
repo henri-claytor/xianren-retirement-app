@@ -8,7 +8,14 @@ const SNAPSHOTS_KEY = 'xianren_snapshots'
 function loadData(): FinancialSnapshot {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return {
+        ...DEFAULT_SNAPSHOT,
+        ...parsed,
+        onboardingDone: parsed.onboardingDone ?? true, // existing users are considered onboarded
+      }
+    }
   } catch {}
   return DEFAULT_SNAPSHOT
 }
@@ -21,47 +28,61 @@ function loadSnapshots(): Snapshot[] {
   return []
 }
 
+// Module-level shared state — all useStore() calls share the same instance
+let _data: FinancialSnapshot = loadData()
+let _snapshots: Snapshot[] = loadSnapshots()
+const _listeners = new Set<() => void>()
+
+function notify() {
+  _listeners.forEach(fn => fn())
+}
+
 export function useStore() {
-  const [data, setData] = useState<FinancialSnapshot>(loadData)
-  const [snapshots, setSnapshots] = useState<Snapshot[]>(loadSnapshots)
+  const [, rerender] = useState(0)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-  }, [data])
-
-  useEffect(() => {
-    localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(snapshots))
-  }, [snapshots])
+    const fn = () => rerender(n => n + 1)
+    _listeners.add(fn)
+    return () => _listeners.delete(fn)
+  }, [])
 
   const updateData = useCallback((updates: Partial<FinancialSnapshot>) => {
-    setData(prev => ({ ...prev, ...updates }))
+    _data = { ..._data, ...updates }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(_data))
+    notify()
   }, [])
 
   const resetData = useCallback(() => {
-    setData(DEFAULT_SNAPSHOT)
+    _data = DEFAULT_SNAPSHOT
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(_data))
+    notify()
   }, [])
 
   const addSnapshot = useCallback((label: string) => {
-    const summary = calcSummary(data)
+    const summary = calcSummary(_data)
     const snapshot: Snapshot = {
       id: Date.now().toString(),
       date: new Date().toISOString().split('T')[0],
       label,
-      data: { ...data },
+      data: { ..._data },
       totalAssets: summary.totalAssets,
       investableAssets: summary.investableAssets,
       shortBucket: summary.shortBucket,
       midBucket: summary.midBucket,
       longBucket: summary.longBucket,
     }
-    setSnapshots(prev => [snapshot, ...prev])
-  }, [data])
-
-  const setOnboardingDone = useCallback((done: boolean) => {
-    setData(prev => ({ ...prev, onboardingDone: done }))
+    _snapshots = [snapshot, ..._snapshots]
+    localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(_snapshots))
+    notify()
   }, [])
 
-  return { data, updateData, resetData, snapshots, addSnapshot, setOnboardingDone }
+  const setOnboardingDone = useCallback((done: boolean) => {
+    _data = { ..._data, onboardingDone: done }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(_data))
+    notify()
+  }, [])
+
+  return { data: _data, updateData, resetData, snapshots: _snapshots, addSnapshot, setOnboardingDone }
 }
 
 export function calcSummary(data: FinancialSnapshot) {
