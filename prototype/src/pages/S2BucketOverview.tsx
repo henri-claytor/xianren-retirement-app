@@ -1,8 +1,25 @@
 import { useState } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts'
-import { PieChart as PieIcon, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
+import { PieChart as PieIcon, ChevronDown, ChevronUp, AlertTriangle, Info } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { PageHeader, Card, fmtTWD } from '../components/Layout'
+
+// 生命週期配置建議（與 A3 相同邏輯）
+function getSuggestedAllocation(yearsToRetire: number) {
+  if (yearsToRetire >= 20) return { short: 5,  mid: 15, long: 80, label: '積極成長期', desc: '距退休 20 年以上，主力放長期桶追求成長' }
+  if (yearsToRetire >= 10) return { short: 10, mid: 25, long: 65, label: '平衡調整期', desc: '距退休 10~20 年，逐步降低風險' }
+  if (yearsToRetire >= 5)  return { short: 15, mid: 35, long: 50, label: '保守過渡期', desc: '距退休 5~10 年，開始建立短中期緩衝' }
+  if (yearsToRetire >= 0)  return { short: 20, mid: 40, long: 40, label: '退休前準備', desc: '距退休 0~5 年，確保短中期資金充足' }
+  return { short: 25, mid: 45, long: 30, label: '退休後提領', desc: '已退休，短中期桶為主' }
+}
+
+const ALLOCATION_STAGES = [
+  { range: '≥ 20 年', short: 5,  mid: 15, long: 80, label: '積極成長期', minYears: 20,  maxYears: Infinity },
+  { range: '10~19 年', short: 10, mid: 25, long: 65, label: '平衡調整期', minYears: 10,  maxYears: 19 },
+  { range: '5~9 年',  short: 15, mid: 35, long: 50, label: '保守過渡期', minYears: 5,   maxYears: 9 },
+  { range: '0~4 年',  short: 20, mid: 40, long: 40, label: '退休前準備', minYears: 0,   maxYears: 4 },
+  { range: '已退休',  short: 25, mid: 45, long: 30, label: '退休後提領', minYears: -Infinity, maxYears: -1 },
+]
 
 const BUCKET_CONFIG = {
   short: { label: '短期桶', color: '#3b82f6', desc: '現金、活存、定存', target: '6~12個月支出' },
@@ -41,6 +58,10 @@ export default function S2BucketOverview() {
   const { data, updateData } = useStore()
   const s = calcSummary(data)
   const [expandedBucket, setExpandedBucket] = useState<string | null>('short')
+  const [showAllocationInfo, setShowAllocationInfo] = useState(false)
+
+  const yearsToRetire = data.retirementAge - data.currentAge
+  const suggested = getSuggestedAllocation(yearsToRetire)
   const USD_TWD = s.USD_TWD
   const overrides = data.bucketOverrides ?? {}
 
@@ -127,7 +148,7 @@ export default function S2BucketOverview() {
 
   const barData = [
     { name: '目前配置', 短期桶: shortRatio, 中期桶: midRatio, 長期桶: longRatio },
-    { name: '建議配置', 短期桶: 10, 中期桶: 30, 長期桶: 60 },
+    { name: '建議配置', 短期桶: suggested.short, 中期桶: suggested.mid, 長期桶: suggested.long },
   ]
 
   const BUCKET_LABELS: Record<BucketKey, string> = { short: '短', mid: '中', long: '長' }
@@ -208,7 +229,65 @@ export default function S2BucketOverview() {
           </Card>
 
           <Card className="p-3">
-            <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">目前 vs 建議比例</h3>
+            {/* 標題列 + 查看說明按鈕 */}
+            <div className="flex items-center justify-between mb-1">
+              <div>
+                <h3 className="text-sm font-semibold text-[#E0E0E0]">目前 vs 建議比例</h3>
+                <p className="text-[#707070] mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
+                  {suggested.label}・建議 {suggested.short}/{suggested.mid}/{suggested.long}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAllocationInfo(v => !v)}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${
+                  showAllocationInfo
+                    ? 'bg-blue-900/40 text-blue-300 border border-blue-700/50'
+                    : 'bg-[#2A2A2A] text-[#A0A0A0] hover:text-[#D4D4D4] border border-[#333]'
+                }`}
+              >
+                <Info size={12} />
+                查看說明
+              </button>
+            </div>
+
+            {/* 可展開的條件說明表 */}
+            <div className={`overflow-hidden transition-all duration-300 ${showAllocationInfo ? 'max-h-96 opacity-100 mb-3' : 'max-h-0 opacity-0'}`}>
+              <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-3 mt-2">
+                <p className="text-xs font-semibold text-[#A0A0A0] mb-2">建議比例依距退休年數調整</p>
+                <table className="w-full" style={{ fontSize: 'var(--font-size-label)' }}>
+                  <thead>
+                    <tr className="text-[#707070] border-b border-[#2A2A2A]">
+                      <th className="text-left pb-1.5 font-medium">距退休</th>
+                      <th className="text-center pb-1.5 font-medium text-blue-400">短期</th>
+                      <th className="text-center pb-1.5 font-medium text-purple-400">中期</th>
+                      <th className="text-center pb-1.5 font-medium text-orange-400">長期</th>
+                      <th className="text-left pb-1.5 font-medium">階段</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ALLOCATION_STAGES.map(stage => {
+                      const isCurrent = yearsToRetire >= stage.minYears && yearsToRetire <= stage.maxYears
+                      return (
+                        <tr
+                          key={stage.range}
+                          className={`border-b border-[#222] last:border-0 ${isCurrent ? 'bg-blue-900/30' : ''}`}
+                        >
+                          <td className={`py-1.5 pr-2 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-[#A0A0A0]'}`}>
+                            {stage.range}
+                            {isCurrent && <span className="ml-1 text-blue-400">◀</span>}
+                          </td>
+                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-[#D4D4D4]'}`}>{stage.short}%</td>
+                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-[#D4D4D4]'}`}>{stage.mid}%</td>
+                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-[#D4D4D4]'}`}>{stage.long}%</td>
+                          <td className={`py-1.5 pl-2 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-[#707070]'}`}>{stage.label}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={barData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
@@ -224,7 +303,7 @@ export default function S2BucketOverview() {
                 <Bar dataKey="長期桶" fill="#f97316" stackId="a" />
               </BarChart>
             </ResponsiveContainer>
-            <p className="text-[#A0A0A0] mt-2 text-center" style={{ fontSize: 'var(--font-size-label)' }}>建議比例僅為參考，依個人情況調整</p>
+            <p className="text-[#A0A0A0] mt-2 text-center" style={{ fontSize: 'var(--font-size-label)' }}>建議比例依您的退休階段自動調整，僅供參考</p>
           </Card>
         </div>
 
