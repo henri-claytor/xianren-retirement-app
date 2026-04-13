@@ -37,10 +37,10 @@ const TABS = [
     defaultPath: '/a1',
     paths: ['/a1', '/a2', '/a3', '/a4'],
     subNav: [
-      { to: '/a1', label: 'A1 目標計算', icon: Target },
-      { to: '/a2', label: 'A2 壓力測試', icon: ShieldAlert },
-      { to: '/a3', label: 'A3 資產配置', icon: BarChart3 },
-      { to: '/a4', label: 'A4 定期追蹤', icon: History },
+      { to: '/a1', label: '目標計算', icon: Target },
+      { to: '/a2', label: '壓力測試', icon: ShieldAlert },
+      { to: '/a3', label: '資產配置', icon: BarChart3 },
+      { to: '/a4', label: '定期追蹤', icon: History },
     ],
   },
   {
@@ -50,10 +50,10 @@ const TABS = [
     defaultPath: '/b1',
     paths: ['/b1', '/b2', '/b3', '/b4'],
     subNav: [
-      { to: '/b1', label: 'B1 提領試算', icon: Wallet },
-      { to: '/b2', label: 'B2 現金流', icon: TrendingUp },
-      { to: '/b3', label: 'B3 警戒水位', icon: Bell },
-      { to: '/b4', label: 'B4 再平衡', icon: RefreshCw },
+      { to: '/b1', label: '提領試算', icon: Wallet },
+      { to: '/b2', label: '現金流', icon: TrendingUp },
+      { to: '/b3', label: '警戒水位', icon: Bell },
+      { to: '/b4', label: '再平衡', icon: RefreshCw },
     ],
   },
   {

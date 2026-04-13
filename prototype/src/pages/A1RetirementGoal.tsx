@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { Target } from 'lucide-react'
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { Target, ChevronDown } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { PageHeader, Card, StatCard, fmtTWD } from '../components/Layout'
 
@@ -26,6 +26,7 @@ export default function A1RetirementGoal() {
   const [withdrawalRate, setWithdrawalRate] = useState(4)
   const [assumedReturn, setAssumedReturn] = useState(data.investmentReturn)
   const [pessimisticReturn, setPessimisticReturn] = useState(3)
+  const [showParams, setShowParams] = useState(false)
 
   const yearsToRetire = data.retirementAge - data.currentAge
   const monthsToRetire = yearsToRetire * 12
@@ -72,12 +73,11 @@ export default function A1RetirementGoal() {
     for (let y = 0; y <= yearsToRetire; y++) {
       const assets = s.investableAssets * Math.pow(1 + assumedReturn / 100, y)
       const pessimisticAssets = s.investableAssets * Math.pow(1 + pessimisticReturn / 100, y)
-      const targetAtYear = adjustedFund // 目標固定
       data.push({
         year: `+${y}年`,
         樂觀資產: Math.round(assets / 10000),
         悲觀資產: Math.round(pessimisticAssets / 10000),
-        目標: Math.round(targetAtYear / 10000),
+        目標: Math.round(adjustedFund / 10000),
       })
     }
     return data
@@ -89,22 +89,24 @@ export default function A1RetirementGoal() {
 
       <div className="px-4 py-2 space-y-3">
         {/* 達成率 */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 text-white">
-          <div className="flex items-end justify-between">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-3 text-white">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 mb-1" style={{ fontSize: 'var(--font-size-body)' }}>退休目標達成率（目前）</p>
-              <p className="font-bold" style={{ fontSize: 'var(--font-size-display)' }}>{Math.min(achievementRate, 100).toFixed(0)}%</p>
-              <p className="text-blue-200 mt-1" style={{ fontSize: 'var(--font-size-label)' }}>
-                目前可投資資產 {fmtTWD(s.investableAssets, true)}，
-                預估退休時成長至 {fmtTWD(currentAssetsAtRetirement, true)}
+              <p className="text-blue-100 mb-0.5" style={{ fontSize: 'var(--font-size-label)' }}>退休目標達成率（目前）</p>
+              <p className="font-bold" style={{ fontSize: '28px' }}>{Math.min(achievementRate, 100).toFixed(0)}%</p>
+              <p className="mt-0.5 flex items-center gap-1.5 flex-wrap" style={{ fontSize: 'var(--font-size-label)' }}>
+                <span>目前可投資</span>
+                <span className="font-semibold" style={{ color: '#FCD34D' }}>{fmtTWD(s.investableAssets, true)}</span>
+                <span className="text-blue-200">→ 退休時預估</span>
+                <span className="font-semibold" style={{ color: '#86EFAC' }}>{fmtTWD(currentAssetsAtRetirement, true)}</span>
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-blue-100" style={{ fontSize: 'var(--font-size-body)' }}>距退休</p>
-              <p className="font-bold" style={{ fontSize: '24px' }}>{yearsToRetire} 年</p>
+            <div className="text-right shrink-0 ml-3">
+              <p className="text-blue-100" style={{ fontSize: 'var(--font-size-label)' }}>距退休</p>
+              <p className="font-bold" style={{ fontSize: '20px' }}>{yearsToRetire} 年</p>
             </div>
           </div>
-          <div className="mt-4 h-3 bg-blue-500/40 rounded-full overflow-hidden">
+          <div className="mt-2 h-2 bg-blue-500/40 rounded-full overflow-hidden">
             <div
               className="h-full bg-white rounded-full transition-all"
               style={{ width: `${Math.min(achievementRate, 100)}%` }}
@@ -112,58 +114,49 @@ export default function A1RetirementGoal() {
           </div>
         </div>
 
+        {/* 資產成長圖 */}
+        <Card className="p-3">
+          <h3 className="text-sm font-semibold text-white mb-3">
+            資產成長預測（未含儲蓄，{data.currentAge}~{data.retirementAge} 歲）
+          </h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <ComposedChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
+              <XAxis dataKey="year" tick={{ fill: '#A0A0A0', fontSize: 11 }} />
+              <YAxis tickFormatter={v => `${v}萬`} tick={{ fill: '#A0A0A0' }} />
+              <Tooltip
+                formatter={(v: any) => `${Number(v).toLocaleString()} 萬`}
+                contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+              />
+              <Legend wrapperStyle={{ color: '#D4D4D4' }} />
+              <Bar dataKey="樂觀資產" fill="#22c55e" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="悲觀資產" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Line
+                dataKey="目標"
+                stroke="#e2e8f0"
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                dot={false}
+                label={(props: any) => {
+                  if (props.index !== 0) return null
+                  return (
+                    <text x={props.x} y={props.y - 6} fill="#e2e8f0" fontSize={11} textAnchor="start">
+                      {`目標 ${props.value.toLocaleString()}萬`}
+                    </text>
+                  )
+                }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </Card>
+
         {/* 關鍵數字 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard label="目標退休金" value={fmtTWD(adjustedFund, true)} sub={`${withdrawalRate}% 提領率`} color="blue" />
-          <StatCard label="未扣被動收入前" value={fmtTWD(retirementFund4, true)} sub="無被動收入假設" color="purple" />
+          <StatCard label="未扣被動收入前" value={fmtTWD(retirementFund4, true)} sub="無被動收入假設" color="amber" />
           <StatCard label="月被動收入" value={fmtTWD(monthlyPassiveIncome, true)} sub="勞保+勞退" color="green" />
           <StatCard label="缺口" value={gap > 0 ? fmtTWD(gap, true) : '已達標 ✓'} sub="需靠儲蓄彌補" color={gap > 0 ? 'red' : 'green'} />
         </div>
-
-        {/* 參數設定 */}
-        <Card className="p-3">
-          <h3 className="text-sm font-semibold text-white mb-3">參數調整</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                退休後月支出：<strong className="text-white">{fmtTWD(monthlyRetireExpense, true)}</strong>
-              </label>
-              <input type="range" min={20000} max={200000} step={1000}
-                value={monthlyRetireExpense} onChange={e => setMonthlyRetireExpense(Number(e.target.value))}
-                className="w-full" />
-              <p className="text-[#A0A0A0] mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
-                通膨調整後退休時：{fmtTWD(inflatedMonthlyExpense, true)}/月
-              </p>
-            </div>
-            <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                提領率：<strong className="text-white">{withdrawalRate}%</strong>
-              </label>
-              <input type="range" min={2} max={5} step={0.5}
-                value={withdrawalRate} onChange={e => setWithdrawalRate(Number(e.target.value))}
-                className="w-full" />
-              <div className="flex justify-between text-[#A0A0A0] mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
-                <span>2%（保守）</span><span>5%（積極）</span>
-              </div>
-            </div>
-            <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                樂觀報酬率：<strong className="text-white">{assumedReturn}%</strong>
-              </label>
-              <input type="range" min={2} max={10} step={0.5}
-                value={assumedReturn} onChange={e => setAssumedReturn(Number(e.target.value))}
-                className="w-full" />
-            </div>
-            <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                悲觀報酬率：<strong className="text-white">{pessimisticReturn}%</strong>
-              </label>
-              <input type="range" min={1} max={7} step={0.5}
-                value={pessimisticReturn} onChange={e => setPessimisticReturn(Number(e.target.value))}
-                className="w-full" />
-            </div>
-          </div>
-        </Card>
 
         {/* 通膨影響區塊 */}
         <Card className="p-3">
@@ -197,7 +190,7 @@ export default function A1RetirementGoal() {
         {/* 每月需儲蓄 */}
         {gap > 0 && (
           <Card className="p-3">
-            <h3 className="text-sm font-semibold text-white mb-4">每月需額外儲蓄（彌補缺口）</h3>
+            <h3 className="text-sm font-semibold text-white mb-3">每月需額外儲蓄（彌補缺口）</h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-green-900/20 rounded-xl p-3">
                 <p className="text-green-300 mb-1" style={{ fontSize: 'var(--font-size-label)' }}>樂觀情境（年報酬 {assumedReturn}%）</p>
@@ -218,39 +211,81 @@ export default function A1RetirementGoal() {
           </Card>
         )}
 
-        {/* 資產成長圖 */}
+        {/* 試算設定 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-white mb-4">
-            資產成長預測（未含儲蓄，{data.currentAge}~{data.retirementAge} 歲）
-          </h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-              <XAxis dataKey="year" tick={{ fill: '#A0A0A0', fontSize: 11 }} />
-              <YAxis tickFormatter={v => `${v}萬`} tick={{ fill: '#A0A0A0' }} />
-              <Tooltip
-                formatter={(v: any) => `${Number(v).toLocaleString()} 萬`}
-                contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+          <button
+            className="w-full flex items-center justify-between"
+            onClick={() => setShowParams(v => !v)}
+          >
+            <h3 className="text-sm font-semibold text-white">試算設定</h3>
+            <div className="flex items-center gap-2">
+              {!showParams && (
+                <span className="text-[#707070]" style={{ fontSize: 'var(--font-size-label)' }}>
+                  月支出 {fmtTWD(monthlyRetireExpense, true)} | 提領率 {withdrawalRate}% | 樂觀 {assumedReturn}% | 悲觀 {pessimisticReturn}%
+                </span>
+              )}
+              <ChevronDown
+                size={16}
+                className="text-[#A0A0A0] transition-transform duration-200"
+                style={{ transform: showParams ? 'rotate(180deg)' : 'rotate(0deg)' }}
               />
-              <Legend wrapperStyle={{ color: '#D4D4D4' }} />
-              <Bar dataKey="目標" fill="#e2e8f0" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="樂觀資產" fill="#22c55e" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="悲觀資產" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+            </div>
+          </button>
+          {showParams && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+              <div>
+                <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                  退休後月支出：<strong className="text-white">{fmtTWD(monthlyRetireExpense, true)}</strong>
+                </label>
+                <input type="range" min={20000} max={200000} step={1000}
+                  value={monthlyRetireExpense} onChange={e => setMonthlyRetireExpense(Number(e.target.value))}
+                  className="w-full" />
+                <p className="text-[#A0A0A0] mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
+                  通膨調整後退休時：{fmtTWD(inflatedMonthlyExpense, true)}/月
+                </p>
+              </div>
+              <div>
+                <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                  提領率：<strong className="text-white">{withdrawalRate}%</strong>
+                </label>
+                <input type="range" min={2} max={5} step={0.5}
+                  value={withdrawalRate} onChange={e => setWithdrawalRate(Number(e.target.value))}
+                  className="w-full" />
+                <div className="flex justify-between text-[#A0A0A0] mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
+                  <span>2%（保守）</span><span>5%（積極）</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                  樂觀報酬率：<strong className="text-white">{assumedReturn}%</strong>
+                </label>
+                <input type="range" min={2} max={10} step={0.5}
+                  value={assumedReturn} onChange={e => setAssumedReturn(Number(e.target.value))}
+                  className="w-full" />
+              </div>
+              <div>
+                <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                  悲觀報酬率：<strong className="text-white">{pessimisticReturn}%</strong>
+                </label>
+                <input type="range" min={1} max={7} step={0.5}
+                  value={pessimisticReturn} onChange={e => setPessimisticReturn(Number(e.target.value))}
+                  className="w-full" />
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* 說明 */}
-        <div className="bg-blue-900/20 rounded-2xl p-4 border border-blue-800/30">
-          <h3 className="text-sm font-semibold text-blue-200 mb-2">📐 計算邏輯說明</h3>
-          <div className="text-blue-300 space-y-1.5" style={{ fontSize: 'var(--font-size-label)' }}>
-            <p>• <strong>目標退休金</strong> = 年支出 ÷ 提領率（4% 法則：退休金 × 4% = 年提領）</p>
-            <p>• <strong>年支出</strong> = 月支出 × 12，並以通膨率調整至退休時點</p>
-            <p>• <strong>被動收入扣除</strong>：勞保年金 + 勞退月退，減少需自備的資金</p>
-            <p>• <strong>每月儲蓄</strong>：用年金終值公式計算，考慮複利效果</p>
+        <Card className="p-3">
+          <h3 className="text-sm font-semibold text-white mb-3">計算邏輯說明</h3>
+          <div className="text-[#A0A0A0] space-y-1.5" style={{ fontSize: 'var(--font-size-label)' }}>
+            <p>• <strong className="text-[#D4D4D4]">目標退休金</strong> = 年支出 ÷ 提領率（4% 法則：退休金 × 4% = 年提領）</p>
+            <p>• <strong className="text-[#D4D4D4]">年支出</strong> = 月支出 × 12，並以通膨率調整至退休時點</p>
+            <p>• <strong className="text-[#D4D4D4]">被動收入扣除</strong>：勞保年金 + 勞退月退，減少需自備的資金</p>
+            <p>• <strong className="text-[#D4D4D4]">每月儲蓄</strong>：用年金終值公式計算，考慮複利效果</p>
             <p>• 保守派建議使用 3% 提領率，嫺人建議 4%（474 法則的基礎）</p>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   )

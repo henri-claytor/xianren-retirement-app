@@ -2,6 +2,14 @@ import { useNavigate } from 'react-router-dom'
 import { DollarSign, PieChart, Target, ShieldAlert, BarChart3, History, BookOpen, Users, ChevronRight } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { fmtTWD, StatCard } from '../components/Layout'
+import { getRetirementStatus, calcAchievementRate } from '../utils/retirementStatus'
+
+const statusColorMap = {
+  blue:  { bg: 'bg-blue-900/30',  border: 'border-blue-800/40',  text: 'text-blue-200',  badge: 'bg-blue-600' },
+  green: { bg: 'bg-green-900/30', border: 'border-green-800/40', text: 'text-green-200', badge: 'bg-green-600' },
+  amber: { bg: 'bg-amber-900/30', border: 'border-amber-800/40', text: 'text-amber-200', badge: 'bg-amber-600' },
+  red:   { bg: 'bg-red-900/30',   border: 'border-red-800/40',   text: 'text-red-200',   badge: 'bg-red-600' },
+}
 
 const foundation = [
   { to: '/s1', label: '財務現況輸入', desc: '輸入資產、收入、支出、負債，建立財務基準', icon: DollarSign, color: 'text-blue-400 bg-blue-900/30' },
@@ -22,9 +30,36 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const s = calcSummary(data)
   const yearsToRetire = data.retirementAge - data.currentAge
+  const achievementRate = calcAchievementRate(data, s.investableAssets)
+  const status = getRetirementStatus(achievementRate, yearsToRetire)
+  const c = statusColorMap[status.color]
 
   return (
     <div className="px-4 py-4">
+      {/* 退休狀態卡 */}
+      <div className={`rounded-2xl p-4 border mb-5 ${c.bg} ${c.border}`}>
+        <div className="flex items-start justify-between">
+          <div>
+            <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full text-white mb-2 ${c.badge}`}>
+              {status.emoji} {status.label}
+            </span>
+            <p className={`text-sm font-medium ${c.text}`}>{status.description}</p>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-white font-bold text-lg">{Math.min(achievementRate, 100).toFixed(0)}%</span>
+              <span className="text-[#707070] text-xs">達成率</span>
+              <span className="text-white font-bold text-lg">{yearsToRetire}</span>
+              <span className="text-[#707070] text-xs">年後退休</span>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/diagnosis')}
+            className="shrink-0 text-xs text-[#A0A0A0] hover:text-white border border-[#2A2A2A] hover:border-[#505050] rounded-xl px-3 py-1.5 transition-colors"
+          >
+            完整診斷 →
+          </button>
+        </div>
+      </div>
+
       {/* Welcome */}
       <div className="mb-5">
         <h1 className="font-bold text-white mb-1" style={{ fontSize: 'var(--font-size-h1)' }}>

@@ -40,6 +40,9 @@ export interface FinancialSnapshot {
 
   // 手動歸桶覆蓋
   bucketOverrides?: Record<string, 'short' | 'mid' | 'long'>
+
+  // Onboarding
+  onboardingDone: boolean
 }
 
 export interface StockHolding {

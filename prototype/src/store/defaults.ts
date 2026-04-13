@@ -3,7 +3,7 @@ import type { FinancialSnapshot } from './types'
 export const DEFAULT_SNAPSHOT: FinancialSnapshot = {
   name: '嫺人',
   currentAge: 45,
-  retirementAge: 55,
+  retirementAge: 65,
   expectedLifespan: 90,
 
   cash: 500000,
@@ -54,4 +54,6 @@ export const DEFAULT_SNAPSHOT: FinancialSnapshot = {
 
   inflationRate: 2,
   investmentReturn: 5,
+
+  onboardingDone: false,
 }

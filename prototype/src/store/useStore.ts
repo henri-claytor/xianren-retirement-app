@@ -57,7 +57,11 @@ export function useStore() {
     setSnapshots(prev => [snapshot, ...prev])
   }, [data])
 
-  return { data, updateData, resetData, snapshots, addSnapshot }
+  const setOnboardingDone = useCallback((done: boolean) => {
+    setData(prev => ({ ...prev, onboardingDone: done }))
+  }, [])
+
+  return { data, updateData, resetData, snapshots, addSnapshot, setOnboardingDone }
 }
 
 export function calcSummary(data: FinancialSnapshot) {
