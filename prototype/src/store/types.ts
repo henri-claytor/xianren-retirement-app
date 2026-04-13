@@ -43,6 +43,15 @@ export interface FinancialSnapshot {
 
   // Onboarding
   onboardingDone: boolean
+
+  // Stress test result
+  stressTestResult: {
+    successRate: number
+    simCount: number
+    meanReturn: number
+    stdDev: number
+    runAt: string
+  } | null
 }
 
 export interface StockHolding {

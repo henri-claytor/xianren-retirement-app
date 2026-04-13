@@ -67,6 +67,15 @@ export default function RetirementDiagnosis() {
     achievementRate >= 70  ? 'green' :
     achievementRate >= 30  ? 'amber' : 'red'
 
+  // 壓力測試
+  const stressResult = data.stressTestResult
+  const stressColor: 'green' | 'amber' | 'red' | 'gray' =
+    stressResult === null ? 'gray' :
+    stressResult.successRate >= 80 ? 'green' :
+    stressResult.successRate >= 60 ? 'amber' : 'red'
+  const stressValue = stressResult ? `${stressResult.successRate.toFixed(0)}%` : '尚未測試'
+  const stressSub = stressResult ? `${stressResult.simCount} 次模擬` : '前往 A2 執行模擬'
+
   // 行動建議
   const recommendations: { condition: boolean; title: string; desc: string; to: string; cta: string }[] = [
     {
@@ -77,9 +86,11 @@ export default function RetirementDiagnosis() {
       cta: '前往退休目標計算',
     },
     {
-      condition: true, // always show A2 suggestion since we never have stress test data
-      title: '進行壓力測試',
-      desc: '尚未執行 Monte Carlo 壓力測試，建議模擬市場波動下的退休成功率。',
+      condition: stressResult === null || stressResult.successRate < 60,
+      title: stressResult === null ? '進行壓力測試' : '壓力測試結果偏低',
+      desc: stressResult === null
+        ? '尚未執行 Monte Carlo 壓力測試，建議模擬市場波動下的退休成功率。'
+        : `壓力測試成功率僅 ${stressResult.successRate.toFixed(0)}%，建議調整資產配置或延後退休。`,
       to: '/a2',
       cta: '前往退休壓力測試',
     },
@@ -123,9 +134,9 @@ export default function RetirementDiagnosis() {
         />
         <DimensionCard
           label="壓力測試通過率"
-          value="尚未測試"
-          sub="前往 A2 執行模擬"
-          color="gray"
+          value={stressValue}
+          sub={stressSub}
+          color={stressColor}
         />
         <DimensionCard
           label="時間充裕度"

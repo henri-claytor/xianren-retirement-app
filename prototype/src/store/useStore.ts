@@ -82,7 +82,13 @@ export function useStore() {
     notify()
   }, [])
 
-  return { data: _data, updateData, resetData, snapshots: _snapshots, addSnapshot, setOnboardingDone }
+  const saveStressTestResult = useCallback((result: FinancialSnapshot['stressTestResult']) => {
+    _data = { ..._data, stressTestResult: result }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(_data))
+    notify()
+  }, [])
+
+  return { data: _data, updateData, resetData, snapshots: _snapshots, addSnapshot, setOnboardingDone, saveStressTestResult }
 }
 
 export function calcSummary(data: FinancialSnapshot) {

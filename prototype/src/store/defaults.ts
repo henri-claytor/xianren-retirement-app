@@ -56,4 +56,5 @@ export const DEFAULT_SNAPSHOT: FinancialSnapshot = {
   investmentReturn: 5,
 
   onboardingDone: false,
+  stressTestResult: null,
 }

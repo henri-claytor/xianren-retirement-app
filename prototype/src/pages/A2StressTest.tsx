@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { ShieldAlert, Zap } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
@@ -67,7 +67,7 @@ const SCENARIOS = [
 ]
 
 export default function A2StressTest() {
-  const { data } = useStore()
+  const { data, saveStressTestResult } = useStore()
   const s = calcSummary(data)
 
   const baseRetirementYears = data.expectedLifespan - data.retirementAge
@@ -117,6 +117,16 @@ export default function A2StressTest() {
 
   const successEmoji = result.successRate >= 90 ? '🟢' : result.successRate >= 75 ? '🟡' : '🔴'
   const lifeExpected = data.retirementAge + totalRetirementYears
+
+  useEffect(() => {
+    saveStressTestResult({
+      successRate: result.successRate,
+      simCount: 1000,
+      meanReturn,
+      stdDev,
+      runAt: new Date().toISOString(),
+    })
+  }, [result.successRate, meanReturn, stdDev])
 
   return (
     <div>
