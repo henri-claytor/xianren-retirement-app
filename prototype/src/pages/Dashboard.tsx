@@ -1,143 +1,191 @@
 import { useNavigate } from 'react-router-dom'
-import { DollarSign, PieChart, Target, ShieldAlert, BarChart3, History, BookOpen, Users, ChevronRight } from 'lucide-react'
+import {
+  DollarSign, PieChart, Target, ShieldAlert, BarChart3, History,
+  Wallet, TrendingUp, Bell, RefreshCw, ChevronRight,
+} from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
-import { fmtTWD, StatCard } from '../components/Layout'
+import { fmtTWD } from '../components/Layout'
 import { getRetirementStatus, calcAchievementRate } from '../utils/retirementStatus'
 
-const statusColorMap = {
-  blue:  { bg: 'bg-blue-900/30',  border: 'border-blue-800/40',  text: 'text-blue-200',  badge: 'bg-blue-600' },
-  green: { bg: 'bg-green-900/30', border: 'border-green-800/40', text: 'text-green-200', badge: 'bg-green-600' },
-  amber: { bg: 'bg-amber-900/30', border: 'border-amber-800/40', text: 'text-amber-200', badge: 'bg-amber-600' },
-  red:   { bg: 'bg-red-900/30',   border: 'border-red-800/40',   text: 'text-red-200',   badge: 'bg-red-600' },
+// ── Health indicator card ─────────────────────────────────────────────
+function HealthCard({
+  label, value, sub, color, onClick,
+}: {
+  label: string
+  value: string
+  sub?: string
+  color: 'blue' | 'green' | 'amber' | 'red' | 'gray'
+  onClick?: () => void
+}) {
+  const colorMap = {
+    blue:  { bg: 'bg-blue-900/20',  border: 'border-blue-800/30',  val: 'text-blue-300' },
+    green: { bg: 'bg-green-900/20', border: 'border-green-800/30', val: 'text-green-300' },
+    amber: { bg: 'bg-amber-900/20', border: 'border-amber-800/30', val: 'text-amber-300' },
+    red:   { bg: 'bg-red-900/20',   border: 'border-red-800/30',   val: 'text-red-300' },
+    gray:  { bg: 'bg-[#202020]',    border: 'border-[#2A2A2A]',    val: 'text-[#A0A0A0]' },
+  }
+  const c = colorMap[color]
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-2xl p-3 border text-left w-full transition-opacity ${c.bg} ${c.border} ${onClick ? 'active:opacity-70' : 'cursor-default'}`}
+    >
+      <p className="text-[#707070] text-xs mb-1">{label}</p>
+      <p className={`font-bold text-base leading-tight ${c.val}`}>{value}</p>
+      {sub && <p className="text-[#505050] text-xs mt-0.5">{sub}</p>}
+    </button>
+  )
 }
 
-const foundation = [
-  { to: '/s1', label: '財務現況輸入', desc: '輸入資產、收入、支出、負債，建立財務基準', icon: DollarSign, color: 'text-blue-400 bg-blue-900/30' },
-  { to: '/s2', label: '三桶金總覽', desc: '短期、中期、長期三桶金歸桶與健康度分析', icon: PieChart, color: 'text-purple-400 bg-purple-900/30' },
-]
+// ── Tool list group ───────────────────────────────────────────────────
+function ToolGroup({
+  title, tools,
+}: {
+  title: string
+  tools: { to: string; label: string; desc: string; icon: React.ElementType; color: string }[]
+}) {
+  const navigate = useNavigate()
+  return (
+    <div className="mb-4">
+      <h2 className="font-semibold text-[#A0A0A0] text-xs uppercase tracking-wide mb-2 px-1">{title}</h2>
+      <div className="bg-[#202020] rounded-2xl border border-[#2A2A2A] overflow-hidden">
+        {tools.map((tool, i) => (
+          <button
+            key={tool.to}
+            onClick={() => navigate(tool.to)}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[#2A2A2A] transition-colors group ${i < tools.length - 1 ? 'border-b border-[#2A2A2A]' : ''}`}
+          >
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${tool.color}`}>
+              <tool.icon size={13} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="font-semibold text-white" style={{ fontSize: 'var(--font-size-body)' }}>{tool.label}</span>
+              <p className="text-[#707070] truncate" style={{ fontSize: 'var(--font-size-label)' }}>{tool.desc}</p>
+            </div>
+            <ChevronRight size={14} className="text-[#505050] group-hover:text-blue-400 shrink-0 transition-colors" />
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
-const planningTools = [
-  { to: '/a1', label: '退休目標計算', desc: '計算退休所需資金與每月需儲蓄金額', icon: Target, color: 'text-green-400 bg-green-900/30' },
-  { to: '/a2', label: '退休壓力測試', desc: 'Monte Carlo 模擬，評估退休成功機率', icon: ShieldAlert, color: 'text-red-400 bg-red-900/30' },
-  { to: '/a3', label: '資產配置建議', desc: '依退休年限給出三桶金比例建議', icon: BarChart3, color: 'text-teal-400 bg-teal-900/30' },
-  { to: '/a4', label: '定期資產追蹤', desc: '記錄每期資產快照，追蹤退休進度', icon: History, color: 'text-[#D4D4D4] bg-[#2A2A2A]' },
-  { to: '/c1', label: '退休知識', desc: '精選退休財務、稅務、生活規劃文章', icon: BookOpen, color: 'text-sky-400 bg-sky-900/30' },
-  { to: '/c2', label: '退休社團', desc: '同齡族群交流退休心得與生活經驗', icon: Users, color: 'text-rose-400 bg-rose-900/30' },
-]
-
+// ── Page ─────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { data, snapshots } = useStore()
+  const { data } = useStore()
   const navigate = useNavigate()
   const s = calcSummary(data)
+
   const yearsToRetire = data.retirementAge - data.currentAge
+  const monthsToRetire = yearsToRetire * 12
   const achievementRate = calcAchievementRate(data, s.investableAssets)
   const status = getRetirementStatus(achievementRate, yearsToRetire)
-  const c = statusColorMap[status.color]
+
+  // 距目標差距 & 每月需儲蓄（與 A1 相同邏輯）
+  const withdrawalRate = 4
+  const monthlyExpense = data.essentialExpenses.reduce((sum, e) => sum + e.amount, 0)
+  const inflatedExpense = monthlyExpense * Math.pow(1 + data.inflationRate / 100, yearsToRetire)
+  const retirementFund = (inflatedExpense * 12) / (withdrawalRate / 100)
+  const assetsAtRetirement = s.investableAssets * Math.pow(1 + data.investmentReturn / 100, yearsToRetire)
+  const gap = Math.max(retirementFund - assetsAtRetirement, 0)
+  const monthlyRate = data.investmentReturn / 100 / 12
+  const requiredSavings = gap > 0 && monthlyRate > 0 && monthsToRetire > 0
+    ? gap * monthlyRate / (Math.pow(1 + monthlyRate, monthsToRetire) - 1)
+    : 0
+
+  // 達成率顏色
+  const achieveColor: 'blue' | 'green' | 'amber' | 'red' =
+    achievementRate >= 100 ? 'blue' :
+    achievementRate >= 70  ? 'green' :
+    achievementRate >= 30  ? 'amber' : 'red'
+
+  // 壓力測試顏色
+  const stressResult = data.stressTestResult
+  const stressColor: 'green' | 'amber' | 'red' | 'gray' =
+    stressResult === null ? 'gray' :
+    stressResult.successRate >= 80 ? 'green' :
+    stressResult.successRate >= 60 ? 'amber' : 'red'
+
+  // 差距顏色
+  const gapColor: 'green' | 'red' = gap === 0 ? 'green' : 'red'
+
+  // 每月需儲蓄顏色
+  const savingsColor: 'green' | 'amber' = requiredSavings === 0 ? 'green' : 'amber'
 
   return (
     <div className="px-4 py-4">
-      {/* 退休狀態卡 */}
-      <div className={`rounded-2xl p-4 border mb-5 ${c.bg} ${c.border}`}>
-        <div className="flex items-start justify-between">
-          <div>
-            <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full text-white mb-2 ${c.badge}`}>
-              {status.emoji} {status.label}
-            </span>
-            <p className={`text-sm font-medium ${c.text}`}>{status.description}</p>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="text-white font-bold text-lg">{Math.min(achievementRate, 100).toFixed(0)}%</span>
-              <span className="text-[#707070] text-xs">達成率</span>
-              <span className="text-white font-bold text-lg">{yearsToRetire}</span>
-              <span className="text-[#707070] text-xs">年後退休</span>
-            </div>
-          </div>
-          <button
-            onClick={() => navigate('/diagnosis')}
-            className="shrink-0 text-xs text-[#A0A0A0] hover:text-white border border-[#2A2A2A] hover:border-[#505050] rounded-xl px-3 py-1.5 transition-colors"
-          >
-            完整診斷 →
-          </button>
-        </div>
-      </div>
-
-      {/* Welcome */}
-      <div className="mb-5">
-        <h1 className="font-bold text-white mb-1" style={{ fontSize: 'var(--font-size-h1)' }}>
-          你好，{data.name} 👋
+      {/* 標題 */}
+      <div className="mb-4">
+        <h1 className="font-bold text-white" style={{ fontSize: 'var(--font-size-h1)' }}>
+          退休儀表板
         </h1>
-        <p className="text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-body)' }}>
-          距離退休還有 <span className="font-semibold text-blue-400">{yearsToRetire} 年</span>
-          （{data.currentAge} 歲 → {data.retirementAge} 歲）
+        <p className="text-[#707070] text-xs mt-0.5">
+          距退休還有 <span className="text-blue-400 font-semibold">{yearsToRetire} 年</span>
+          （{data.currentAge} 歲 → {data.retirementAge} 歲）｜
+          <span className={`font-semibold`} style={{ color: status.color === 'blue' ? '#60A5FA' : status.color === 'green' ? '#4ADE80' : status.color === 'amber' ? '#FCD34D' : '#F87171' }}>
+            {status.emoji} {status.label}
+          </span>
         </p>
       </div>
 
-      {/* Key Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        <StatCard label="總資產" value={fmtTWD(s.totalAssets, true)} sub="含自住不動產" color="blue" />
-        <StatCard label="可投資資產" value={fmtTWD(s.investableAssets, true)} sub="不含自住不動產" color="purple" />
-        <StatCard
-          label="月結餘"
-          value={fmtTWD(s.monthlySurplus, true)}
-          sub={`儲蓄率 ${s.savingsRate.toFixed(0)}%`}
-          color={s.monthlySurplus >= 0 ? 'green' : 'red'}
+      {/* 退休健康指標 2×2 */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <HealthCard
+          label="退休達成率"
+          value={`${Math.min(achievementRate, 999).toFixed(0)}%`}
+          sub="點擊查看完整診斷"
+          color={achieveColor}
+          onClick={() => navigate('/diagnosis')}
         />
-        <StatCard label="已存快照" value={`${snapshots.length} 筆`} sub="定期追蹤紀錄" color="amber" />
+        <HealthCard
+          label="壓力測試成功率"
+          value={stressResult ? `${stressResult.successRate.toFixed(0)}%` : '—'}
+          sub={stressResult ? `${stressResult.simCount} 次模擬` : '點擊前往測試'}
+          color={stressColor}
+          onClick={() => navigate('/a2')}
+        />
+        <HealthCard
+          label="距退休目標差距"
+          value={gap === 0 ? '已達標 ✓' : fmtTWD(gap, true)}
+          sub={gap === 0 ? `目標 ${fmtTWD(retirementFund, true)}` : `目標 ${fmtTWD(retirementFund, true)}`}
+          color={gapColor}
+        />
+        <HealthCard
+          label="每月需儲蓄"
+          value={requiredSavings === 0 ? '不需額外儲蓄' : fmtTWD(requiredSavings, true)}
+          sub={`報酬率 ${data.investmentReturn}%`}
+          color={savingsColor}
+        />
       </div>
 
-      {/* 財務基礎 */}
-      <h2 className="font-semibold text-[#D4D4D4] mb-2" style={{ fontSize: 'var(--font-size-body)' }}>財務基礎</h2>
-      <div className="bg-[#202020] rounded-2xl border border-[#2A2A2A] overflow-hidden mb-4">
-        {foundation.map((tool, i) => (
-          <button
-            key={tool.to}
-            onClick={() => navigate(tool.to)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[#2A2A2A] transition-colors group ${i < foundation.length - 1 ? 'border-b border-[#2A2A2A]' : ''}`}
-          >
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${tool.color}`}>
-              <tool.icon size={13} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <span className="font-semibold text-white" style={{ fontSize: 'var(--font-size-body)' }}>{tool.label}</span>
-              <p className="text-[#A0A0A0] truncate" style={{ fontSize: 'var(--font-size-label)' }}>{tool.desc}</p>
-            </div>
-            <ChevronRight size={14} className="text-[#505050] group-hover:text-blue-400 shrink-0 transition-colors" />
-          </button>
-        ))}
-      </div>
+      {/* 工具入口 */}
+      <ToolGroup
+        title="財務基礎"
+        tools={[
+          { to: '/s1', label: '財務現況輸入', desc: '輸入資產、收入、支出、負債', icon: DollarSign, color: 'text-blue-400 bg-blue-900/30' },
+          { to: '/s2', label: '三桶金總覽',  desc: '短、中、長期資產歸桶分析',   icon: PieChart,   color: 'text-purple-400 bg-purple-900/30' },
+        ]}
+      />
 
-      {/* 規劃工具 */}
-      <h2 className="font-semibold text-[#D4D4D4] mb-2" style={{ fontSize: 'var(--font-size-body)' }}>規劃工具</h2>
-      <div className="bg-[#202020] rounded-2xl border border-[#2A2A2A] overflow-hidden mb-5">
-        {planningTools.map((tool, i) => (
-          <button
-            key={tool.to}
-            onClick={() => navigate(tool.to)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[#2A2A2A] transition-colors group ${i < planningTools.length - 1 ? 'border-b border-[#2A2A2A]' : ''}`}
-          >
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${tool.color}`}>
-              <tool.icon size={13} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <span className="font-semibold text-white" style={{ fontSize: 'var(--font-size-body)' }}>{tool.label}</span>
-              <p className="text-[#A0A0A0] truncate" style={{ fontSize: 'var(--font-size-label)' }}>{tool.desc}</p>
-            </div>
-            <ChevronRight size={14} className="text-[#505050] group-hover:text-blue-400 shrink-0 transition-colors" />
-          </button>
-        ))}
-      </div>
+      <ToolGroup
+        title="退休前規劃"
+        tools={[
+          { to: '/a1', label: '退休目標計算', desc: '退休所需資金與每月需儲蓄',         icon: Target,      color: 'text-green-400 bg-green-900/30' },
+          { to: '/a2', label: '退休壓力測試', desc: 'Monte Carlo 模擬退休成功率',       icon: ShieldAlert, color: 'text-red-400 bg-red-900/30' },
+          { to: '/a3', label: '資產配置建議', desc: '依退休年限給出三桶金比例建議',     icon: BarChart3,   color: 'text-teal-400 bg-teal-900/30' },
+          { to: '/a4', label: '定期資產追蹤', desc: '記錄每期快照，追蹤退休進度',       icon: History,     color: 'text-[#D4D4D4] bg-[#2A2A2A]' },
+        ]}
+      />
 
-      {/* Quick Tips */}
-      <div className="bg-blue-900/20 rounded-2xl p-4 border border-blue-800/30">
-        <h3 className="font-semibold text-blue-200 mb-2" style={{ fontSize: 'var(--font-size-body)' }}>📌 建議操作流程</h3>
-        <ol className="text-blue-300/90 space-y-1 list-decimal list-inside" style={{ fontSize: 'var(--font-size-body)' }}>
-          <li>先到 <strong>財務現況輸入</strong>，填入你的資產、收支、負債</li>
-          <li>到 <strong>三桶金總覽</strong>，確認各資產的歸桶是否正確</li>
-          <li>到 <strong>退休目標計算</strong>，算出你的退休目標金額</li>
-          <li>到 <strong>退休壓力測試</strong>，用 Monte Carlo 驗證退休成功率</li>
-          <li>到 <strong>資產配置建議</strong>，看三桶金比例是否符合建議</li>
-          <li>定期到 <strong>定期資產追蹤</strong>，記錄每期快照追蹤進度</li>
-        </ol>
-      </div>
+      <ToolGroup
+        title="退休後管理"
+        tools={[
+          { to: '/b1', label: '提領試算',   desc: '三桶金提領順序與資產消耗模擬', icon: Wallet,    color: 'text-sky-400 bg-sky-900/30' },
+          { to: '/b2', label: '現金流',     desc: '退休後逐年現金流與提領率追蹤', icon: TrendingUp, color: 'text-indigo-400 bg-indigo-900/30' },
+          { to: '/b3', label: '警戒水位',   desc: '資產警戒線設定與通知',         icon: Bell,      color: 'text-orange-400 bg-orange-900/30' },
+          { to: '/b4', label: '再平衡',     desc: '三桶金再平衡時機與建議操作',   icon: RefreshCw, color: 'text-rose-400 bg-rose-900/30' },
+        ]}
+      />
     </div>
   )
 }

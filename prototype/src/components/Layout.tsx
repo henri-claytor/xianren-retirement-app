@@ -14,7 +14,7 @@ import {
 const TABS = [
   {
     id: 'home',
-    label: '首頁',
+    label: '儀表板',
     icon: Home,
     defaultPath: '/',
     paths: ['/'],
