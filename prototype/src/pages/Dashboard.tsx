@@ -252,7 +252,6 @@ function VerdictCard({
     ? 'border-dashed border-amber-400'
     : C.border
   const testValueColor = isTestMode ? 'text-amber-600' : 'text-main'
-  const testSecondaryColor = isTestMode ? 'text-amber-600' : ''
 
   // S1 未填：只顯示提示
   if (monthlyExpense === 0) {

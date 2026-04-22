@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Home, Target, TrendingUp, ChevronRight,
   PieChart, ShieldAlert, BarChart3, History,
-  Wallet, Bell, RefreshCw, Settings,
+  Wallet, Bell, RefreshCw, Settings, Plus,
   type LucideIcon,
 } from 'lucide-react'
 

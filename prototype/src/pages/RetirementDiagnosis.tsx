@@ -44,7 +44,7 @@ export default function RetirementDiagnosis() {
   const navigate = useNavigate()
   const s = calcSummary(data)
   const yearsToRetire = data.retirementAge - data.currentAge
-  const achievementRate = calcAchievementRate(data, s.investableAssets)
+  const achievementRate = calcAchievementRate(data, s.investableAssets, s.monthlySurplus)
   const status = getRetirementStatus(achievementRate, yearsToRetire)
   const c = statusColorMap[status.color]
 
