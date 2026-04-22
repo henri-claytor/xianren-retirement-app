@@ -48,7 +48,7 @@ export default function A4PeriodicTracking() {
       <div className="px-4 py-2 space-y-3">
         {/* 目前狀態 + 記錄按鈕 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">目前財務快照（來自 S1）</h3>
+          <h3 className="text-sm font-semibold text-main mb-3">目前財務快照（來自 S1）</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
             <StatCard label="總資產" value={fmtTWD(s.totalAssets, true)} color="blue" />
             <StatCard label="可投資資產" value={fmtTWD(s.investableAssets, true)} color="purple" />
@@ -63,7 +63,7 @@ export default function A4PeriodicTracking() {
               value={label}
               onChange={e => setLabel(e.target.value)}
               placeholder="快照備註（如：2026 Q1）"
-              className="bg-[#252525] text-white border border-[#2A2A2A] rounded-xl px-4 py-2.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-[#707070]"
+              className="bg-elevated text-main border border-base rounded-xl px-4 py-2.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-faint"
             />
             <button
               onClick={handleSnapshot}
@@ -73,7 +73,7 @@ export default function A4PeriodicTracking() {
               {saved ? '已儲存 ✓' : '記錄快照'}
             </button>
           </div>
-          <p className="text-[#A0A0A0] mt-2" style={{ fontSize: 'var(--font-size-label)' }}>快照採 Append-only，不覆蓋歷史紀錄</p>
+          <p className="text-dim mt-2" style={{ fontSize: 'var(--font-size-label)' }}>快照採 Append-only，不覆蓋歷史紀錄</p>
         </Card>
 
         {/* 與上期比較 */}
@@ -108,7 +108,7 @@ export default function A4PeriodicTracking() {
         {chartData.length >= 2 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="p-3">
-              <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">總資產 / 可投資資產趨勢</h3>
+              <h3 className="text-sm font-semibold text-main mb-3">總資產 / 可投資資產趨勢</h3>
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
@@ -126,7 +126,7 @@ export default function A4PeriodicTracking() {
             </Card>
 
             <Card className="p-3">
-              <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">三桶金趨勢</h3>
+              <h3 className="text-sm font-semibold text-main mb-3">三桶金趨勢</h3>
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
@@ -145,7 +145,7 @@ export default function A4PeriodicTracking() {
             </Card>
           </div>
         ) : chartData.length === 1 ? (
-          <div className="bg-blue-900/20 rounded-xl p-4 text-sm text-blue-300 text-center">
+          <div className="bg-blue-50 rounded-xl p-4 text-sm text-blue-700 text-center">
             再記錄一次快照，即可看到趨勢圖表
           </div>
         ) : null}
@@ -153,12 +153,12 @@ export default function A4PeriodicTracking() {
         {/* 快照歷史 */}
         <Card className="p-3">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-[#E0E0E0]">快照歷史記錄</h3>
-            <span className="text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>{snapshots.length} 筆</span>
+            <h3 className="text-sm font-semibold text-main">快照歷史記錄</h3>
+            <span className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>{snapshots.length} 筆</span>
           </div>
 
           {snapshots.length === 0 ? (
-            <div className="text-center py-10 text-[#A0A0A0]">
+            <div className="text-center py-10 text-dim">
               <Camera size={32} className="mx-auto mb-3 opacity-30" />
               <p style={{ fontSize: 'var(--font-size-body)' }}>尚未記錄任何快照</p>
               <p className="mt-1" style={{ fontSize: 'var(--font-size-label)' }}>點擊上方「記錄快照」開始追蹤</p>
@@ -167,14 +167,14 @@ export default function A4PeriodicTracking() {
             <div className="overflow-x-auto">
               <table className="w-full" style={{ fontSize: 'var(--font-size-body)' }}>
                 <thead>
-                  <tr className="border-b border-[#2A2A2A]" style={{ fontSize: 'var(--font-size-label)' }}>
-                    <th className="text-left py-2 px-3 text-[#A0A0A0] font-medium">日期</th>
-                    <th className="text-left py-2 px-3 text-[#A0A0A0] font-medium">備註</th>
-                    <th className="text-right py-2 px-3 text-[#A0A0A0] font-medium">總資產</th>
-                    <th className="text-right py-2 px-3 text-[#A0A0A0] font-medium">可投資</th>
-                    <th className="text-right py-2 px-3 text-[#A0A0A0] font-medium">短期桶</th>
-                    <th className="text-right py-2 px-3 text-[#A0A0A0] font-medium">中期桶</th>
-                    <th className="text-right py-2 px-3 text-[#A0A0A0] font-medium">長期桶</th>
+                  <tr className="border-b border-base" style={{ fontSize: 'var(--font-size-label)' }}>
+                    <th className="text-left py-2 px-3 text-dim font-medium">日期</th>
+                    <th className="text-left py-2 px-3 text-dim font-medium">備註</th>
+                    <th className="text-right py-2 px-3 text-dim font-medium">總資產</th>
+                    <th className="text-right py-2 px-3 text-dim font-medium">可投資</th>
+                    <th className="text-right py-2 px-3 text-dim font-medium">短期桶</th>
+                    <th className="text-right py-2 px-3 text-dim font-medium">中期桶</th>
+                    <th className="text-right py-2 px-3 text-dim font-medium">長期桶</th>
                     <th className="py-2 px-3"></th>
                   </tr>
                 </thead>
@@ -183,22 +183,22 @@ export default function A4PeriodicTracking() {
                     const prev = snapshots[idx + 1]
                     const gr = prev ? growthRate(snap.investableAssets, prev.investableAssets) : null
                     return (
-                      <tr key={snap.id} className={`border-b border-[#2A2A2A] hover:bg-[#252525] ${idx === 0 ? 'bg-blue-900/15' : ''}`}>
+                      <tr key={snap.id} className={`border-b border-base hover:bg-elevated ${idx === 0 ? 'bg-blue-50' : ''}`}>
                         <td className="py-2.5 px-3">
-                          <span className="text-[#D4D4D4]">{snap.date}</span>
-                          {idx === 0 && <span className="ml-1 text-xs bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded">最新</span>}
+                          <span className="text-main">{snap.date}</span>
+                          {idx === 0 && <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">最新</span>}
                         </td>
-                        <td className="py-2.5 px-3 text-[#A0A0A0]">{snap.label}</td>
+                        <td className="py-2.5 px-3 text-dim">{snap.label}</td>
                         <td className="py-2.5 px-3 text-right font-medium">{fmtTWD(snap.totalAssets, true)}</td>
                         <td className="py-2.5 px-3 text-right">
                           <span className="font-medium">{fmtTWD(snap.investableAssets, true)}</span>
-                          {gr && <span className={`ml-1 text-xs ${gr.startsWith('+') ? 'text-green-400' : 'text-red-500'}`}>{gr}</span>}
+                          {gr && <span className={`ml-1 text-xs ${gr.startsWith('+') ? 'text-green-600' : 'text-red-500'}`}>{gr}</span>}
                         </td>
-                        <td className="py-2.5 px-3 text-right text-blue-400">{fmtTWD(snap.shortBucket, true)}</td>
-                        <td className="py-2.5 px-3 text-right text-purple-400">{fmtTWD(snap.midBucket, true)}</td>
+                        <td className="py-2.5 px-3 text-right text-blue-600">{fmtTWD(snap.shortBucket, true)}</td>
+                        <td className="py-2.5 px-3 text-right text-purple-600">{fmtTWD(snap.midBucket, true)}</td>
                         <td className="py-2.5 px-3 text-right text-orange-400">{fmtTWD(snap.longBucket, true)}</td>
                         <td className="py-2.5 px-3">
-                          <button className="text-[#404040] hover:text-red-400 transition-colors" title="快照為 append-only，僅供展示">
+                          <button className="text-dim hover:text-red-600 transition-colors" title="快照為 append-only，僅供展示">
                             <Trash2 size={13} />
                           </button>
                         </td>
@@ -212,7 +212,7 @@ export default function A4PeriodicTracking() {
         </Card>
 
         {/* 操作建議 */}
-        <div className="bg-green-900/20 rounded-2xl p-4 border border-green-800/30">
+        <div className="bg-green-50 rounded-2xl p-4 border border-green-200">
           <h3 className="text-sm font-semibold text-green-200 mb-2">📅 定期追蹤建議</h3>
           <div className="text-green-300 space-y-1" style={{ fontSize: 'var(--font-size-label)' }}>
             <p>• <strong>頻率</strong>：建議每季（3個月）記錄一次，不需要太頻繁</p>

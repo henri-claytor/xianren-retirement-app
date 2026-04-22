@@ -61,7 +61,7 @@ export default function C1ContentFeed() {
       <PageHeader title="退休知識" subtitle="文章與影音內容精選" icon={BookOpen} />
 
       {/* 分類 Tab */}
-      <div className="sticky top-0 z-10 bg-[#0F0F0F] border-b border-[#2A2A2A]">
+      <div className="sticky top-0 z-10 bg-app border-b border-base">
         <div className="flex overflow-x-auto scrollbar-none px-4 py-2 gap-2">
           {CATEGORIES.map(cat => (
             <button
@@ -70,7 +70,7 @@ export default function C1ContentFeed() {
               className={`shrink-0 px-3 py-1.5 rounded-full font-medium transition-all ${
                 activeCategory === cat
                   ? 'bg-blue-600 text-white'
-                  : 'bg-[#252525] text-[#A0A0A0] hover:text-white'
+                  : 'bg-elevated text-dim hover:text-main'
               }`}
               style={{ fontSize: '11px' }}
             >
@@ -96,12 +96,12 @@ export default function C1ContentFeed() {
               {/* 內容 */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#2A2A2A] text-[#A0A0A0]">{article.category}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-elevated text-dim">{article.category}</span>
                 </div>
                 <p className="text-white font-medium leading-snug mb-1.5 line-clamp-2" style={{ fontSize: '12px' }}>
                   {article.title}
                 </p>
-                <div className="flex items-center gap-3 text-[#505050]" style={{ fontSize: '10px' }}>
+                <div className="flex items-center gap-3 text-faint" style={{ fontSize: '10px' }}>
                   <span className="flex items-center gap-1"><Clock size={10} />{article.date}</span>
                   <span className="flex items-center gap-1"><Eye size={10} />{article.views}</span>
                   <span>{article.readMins} 分鐘</span>
@@ -112,12 +112,12 @@ export default function C1ContentFeed() {
         ))}
 
         {filtered.length === 0 && (
-          <div className="text-center text-[#505050] py-12" style={{ fontSize: '13px' }}>
+          <div className="text-center text-faint py-12" style={{ fontSize: '13px' }}>
             此分類暫無文章
           </div>
         )}
 
-        <div className="bg-blue-900/20 rounded-xl p-3 text-blue-300 text-center" style={{ fontSize: '11px' }}>
+        <div className="bg-blue-50 rounded-xl p-3 text-blue-700 text-center" style={{ fontSize: '11px' }}>
           📌 更多內容持續更新中，VIP 文章需訂閱解鎖
         </div>
       </div>

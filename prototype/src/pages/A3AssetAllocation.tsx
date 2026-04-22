@@ -64,7 +64,7 @@ export default function A3AssetAllocation() {
   }))
 
   function DiffBadge({ diff }: { diff: number }) {
-    if (Math.abs(diff) < 2) return <span className="text-xs text-green-400 font-medium">✅ 合理</span>
+    if (Math.abs(diff) < 2) return <span className="text-xs text-green-600 font-medium">✅ 合理</span>
     const isOver = diff > 0
     const level = Math.abs(diff) > 15 ? '🔴 嚴重' : Math.abs(diff) > 8 ? '🟡 偏差' : '🟡 微偏'
     return <span className={`text-xs font-medium ${Math.abs(diff) > 15 ? 'text-red-600' : 'text-amber-600'}`}>
@@ -85,7 +85,7 @@ export default function A3AssetAllocation() {
 
       <div className="px-4 py-2 space-y-3">
         {/* 目前階段 */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 text-white">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 text-main">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-indigo-200 mb-1" style={{ fontSize: 'var(--font-size-label)' }}>目前所在階段</p>
@@ -122,27 +122,27 @@ export default function A3AssetAllocation() {
             <Card key={b.label} className="p-3">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: b.color }} />
-                <span className="font-semibold text-[#E0E0E0] text-sm">{b.label}</span>
+                <span className="font-semibold text-main text-sm">{b.label}</span>
               </div>
               <div className="space-y-2" style={{ fontSize: 'var(--font-size-body)' }}>
                 <div className="flex justify-between">
-                  <span className="text-[#A0A0A0]">目前金額</span>
+                  <span className="text-dim">目前金額</span>
                   <span className="font-semibold">{fmtTWD(b.currentAmt, true)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#A0A0A0]">目前佔比</span>
+                  <span className="text-dim">目前佔比</span>
                   <span>{b.current.toFixed(1)}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#A0A0A0]">建議目標</span>
-                  <span className="font-medium text-[#E0E0E0]">{fmtTWD(b.target, true)}</span>
+                  <span className="text-dim">建議目標</span>
+                  <span className="font-medium text-main">{fmtTWD(b.target, true)}</span>
                 </div>
-                <div className="flex justify-between items-center pt-1 border-t border-[#2A2A2A]">
-                  <span className="text-[#A0A0A0]">偏差</span>
+                <div className="flex justify-between items-center pt-1 border-t border-base">
+                  <span className="text-dim">偏差</span>
                   <DiffBadge diff={b.diff} />
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#A0A0A0]">建議動作</span>
+                  <span className="text-dim">建議動作</span>
                   <ActionText amount={b.action} />
                 </div>
               </div>
@@ -153,7 +153,7 @@ export default function A3AssetAllocation() {
         {/* 雷達圖 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-3">
-            <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">目前 vs 建議（雷達圖）</h3>
+            <h3 className="text-sm font-semibold text-main mb-3">目前 vs 建議（雷達圖）</h3>
             <ResponsiveContainer width="100%" height={240}>
               <RadarChart data={radarData}>
                 <PolarGrid stroke="#2A2A2A" />
@@ -166,7 +166,7 @@ export default function A3AssetAllocation() {
           </Card>
 
           <Card className="p-3">
-            <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">生命週期配置建議</h3>
+            <h3 className="text-sm font-semibold text-main mb-3">生命週期配置建議</h3>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={lifecycleData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
@@ -182,14 +182,14 @@ export default function A3AssetAllocation() {
                 <Bar dataKey="長期桶" fill="#f97316" stackId="a" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-            <p className="text-[#A0A0A0] mt-2 text-center" style={{ fontSize: 'var(--font-size-label)' }}>隨退休日接近，逐步降低長期桶比例</p>
+            <p className="text-dim mt-2 text-center" style={{ fontSize: 'var(--font-size-label)' }}>隨退休日接近，逐步降低長期桶比例</p>
           </Card>
         </div>
 
         {/* 說明 */}
-        <div className="bg-blue-900/20 rounded-2xl p-4 border border-blue-800/30">
+        <div className="bg-blue-50 rounded-2xl p-4 border border-blue-200">
           <h3 className="text-sm font-semibold text-blue-200 mb-2">📊 三桶金配置邏輯</h3>
-          <div className="text-blue-300 space-y-1.5" style={{ fontSize: 'var(--font-size-label)' }}>
+          <div className="text-blue-600 space-y-1.5" style={{ fontSize: 'var(--font-size-label)' }}>
             <p>• <strong>短期桶</strong>：保持 6~12 個月生活費，隨時可動用，不追求報酬</p>
             <p>• <strong>中期桶</strong>：3~5 年生活費，較穩定的資產（債券、儲蓄險），定期補充短期桶</p>
             <p>• <strong>長期桶</strong>：不急用的錢，放在成長型資產（股票、股票ETF），對抗通膨</p>

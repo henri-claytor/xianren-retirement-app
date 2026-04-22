@@ -1,74 +1,69 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Home, DollarSign, Target, TrendingUp, ChevronRight,
+  Home, Target, TrendingUp, ChevronRight,
   PieChart, ShieldAlert, BarChart3, History,
-  Wallet, Bell, RefreshCw, Database, BookOpen, Users, Plus,
+  Wallet, Bell, RefreshCw, Settings,
   type LucideIcon,
 } from 'lucide-react'
 
-// ── Dark theme tokens ──────────────────────────────────────────
-// bg:      #0F0F0F (app) / #202020 (card) / #252525 (row/input)
-// border:  #2A2A2A
-// text:    #FFFFFF (primary) / #B0B0B0 (secondary) / #707070 (muted)
+// ── SubNavItem union type ─────────────────────────────────────
+type SubNavItem =
+  | { type: 'item';   to: string; label: string; icon: LucideIcon }
+  | { type: 'header'; label: string }
 
-const TABS = [
+// ── Tab interface ─────────────────────────────────────────────
+interface Tab {
+  id: string
+  label: string
+  icon: LucideIcon
+  defaultPath: string
+  paths: string[]
+  subNav?: SubNavItem[]
+}
+
+const TABS: Tab[] = [
   {
     id: 'home',
-    label: '儀表板',
+    label: '退休儀表板',
     icon: Home,
     defaultPath: '/',
     paths: ['/'],
   },
   {
-    id: 'shared',
-    label: '共用工具',
-    icon: Database,
-    defaultPath: '/s1',
-    paths: ['/s1', '/s2'],
-    subNav: [
-      { to: '/s1', label: '財務現況輸入', icon: DollarSign },
-      { to: '/s2', label: '三桶金總覽', icon: PieChart },
-    ],
-  },
-  {
-    id: 'pre',
-    label: '退休前',
+    id: 'plan',
+    label: '退休規劃',
     icon: Target,
     defaultPath: '/a1',
-    paths: ['/a1', '/a2', '/a3', '/a4'],
+    paths: ['/a1', '/a2', '/a3', '/b1', '/b2', '/b3', '/b4'],
     subNav: [
-      { to: '/a1', label: '目標計算', icon: Target },
-      { to: '/a2', label: '壓力測試', icon: ShieldAlert },
-      { to: '/a3', label: '資產配置', icon: BarChart3 },
-      { to: '/a4', label: '定期追蹤', icon: History },
+      { type: 'header', label: '退休前分析' },
+      { type: 'item', to: '/a1', label: '目標計算',  icon: Target },
+      { type: 'item', to: '/a2', label: '壓力測試',  icon: ShieldAlert },
+      { type: 'item', to: '/a3', label: '資產配置',  icon: BarChart3 },
+      { type: 'header', label: '退休後規劃' },
+      { type: 'item', to: '/b1', label: '提領試算',  icon: Wallet },
+      { type: 'item', to: '/b2', label: '現金流',    icon: TrendingUp },
+      { type: 'item', to: '/b3', label: '警戒水位',  icon: Bell },
+      { type: 'item', to: '/b4', label: '再平衡',    icon: RefreshCw },
     ],
   },
   {
-    id: 'post',
-    label: '退休後',
-    icon: TrendingUp,
-    defaultPath: '/b1',
-    paths: ['/b1', '/b2', '/b3', '/b4'],
+    id: 'track',
+    label: '資產追蹤',
+    icon: History,
+    defaultPath: '/a4',
+    paths: ['/a4', '/s2'],
     subNav: [
-      { to: '/b1', label: '提領試算', icon: Wallet },
-      { to: '/b2', label: '現金流', icon: TrendingUp },
-      { to: '/b3', label: '警戒水位', icon: Bell },
-      { to: '/b4', label: '再平衡', icon: RefreshCw },
+      { type: 'item', to: '/a4', label: '月度追蹤',  icon: History },
+      { type: 'item', to: '/s2', label: '資產總覽',  icon: PieChart },
     ],
   },
   {
-    id: 'content',
-    label: '內容',
-    icon: BookOpen,
-    defaultPath: '/c1',
-    paths: ['/c1'],
-  },
-  {
-    id: 'community',
-    label: '社團',
-    icon: Users,
-    defaultPath: '/c2',
-    paths: ['/c2'],
+    id: 'settings',
+    label: '設定',
+    icon: Settings,
+    defaultPath: '/s1',
+    paths: ['/s1'],
   },
 ]
 
@@ -81,32 +76,42 @@ export default function Layout() {
   ) ?? TABS[0]
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] flex flex-col">
+    <div className="min-h-screen bg-app flex flex-col">
       {/* App header */}
-      <div className="sticky top-0 z-40 bg-[#0F0F0F] border-b border-[#2A2A2A]">
+      <div className="sticky top-0 z-40 bg-surface border-b border-base shadow-sm">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xs">退</span>
             </div>
-            <span className="font-semibold text-white text-sm">嫺人退休規劃</span>
+            <span className="font-semibold text-main text-sm">嫺人退休規劃</span>
           </div>
-          <span className="text-[10px] text-[#505050] font-mono">Prototype v1</span>
+          <span className="text-[10px] text-faint font-mono">Prototype v1</span>
         </div>
 
         {/* Sub-navigation tabs */}
         {activeTab.subNav && (
-          <div className="flex overflow-x-auto scrollbar-none px-4 gap-0 border-b border-[#2A2A2A]">
-            {activeTab.subNav.map(item => {
+          <div className="flex overflow-x-auto scrollbar-none px-2 gap-0 border-b border-base">
+            {activeTab.subNav.map((item, idx) => {
+              if (item.type === 'header') {
+                return (
+                  <span
+                    key={`header-${idx}`}
+                    className="shrink-0 px-3 py-2.5 text-[10px] text-faint font-semibold uppercase tracking-wider select-none pointer-events-none"
+                  >
+                    {item.label}
+                  </span>
+                )
+              }
               const isActive = location.pathname === item.to
               return (
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  className={`shrink-0 flex items-center gap-1.5 px-4 py-2.5 font-medium transition-all border-b-[3px] -mb-px ${
+                  className={`shrink-0 flex items-center gap-1.5 px-3 py-2.5 font-medium transition-all border-b-[3px] -mb-px ${
                     isActive
-                      ? 'border-blue-400 text-white'
-                      : 'border-transparent text-[#707070] hover:text-[#D4D4D4]'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-dim hover:text-main'
                   }`}
                   style={{ fontSize: 'var(--font-size-body)' }}
                 >
@@ -125,7 +130,7 @@ export default function Layout() {
       </main>
 
       {/* Bottom tab bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A] border-t border-[#2A2A2A]">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-base shadow-lg">
         <div className="flex safe-bottom">
           {TABS.map(tab => {
             const isActive = tab.id === activeTab.id
@@ -134,11 +139,11 @@ export default function Layout() {
                 key={tab.id}
                 onClick={() => navigate(tab.defaultPath)}
                 className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors ${
-                  isActive ? 'text-blue-500' : 'text-[#505050]'
+                  isActive ? 'text-blue-600' : 'text-faint'
                 }`}
               >
                 <tab.icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
-                <span className={`text-[10px] font-medium ${isActive ? 'text-blue-400' : 'text-[#505050]'}`}>
+                <span className={`text-[10px] font-medium ${isActive ? 'text-blue-600' : 'text-faint'}`}>
                   {tab.label}
                 </span>
               </button>
@@ -150,7 +155,7 @@ export default function Layout() {
   )
 }
 
-// ── Shared UI components (dark theme) ─────────────────────────
+// ── Shared UI components (light theme) ────────────────────────
 
 export function PageHeader({ title, subtitle, icon: Icon }: {
   title: string
@@ -158,16 +163,16 @@ export function PageHeader({ title, subtitle, icon: Icon }: {
   icon?: React.ComponentType<{ size?: number; className?: string }>
 }) {
   return (
-    <div className="bg-[#0F0F0F] px-4 py-2">
+    <div className="bg-app px-4 py-2">
       <div className="flex items-center gap-2">
         {Icon && (
-          <div className="w-6 h-6 bg-blue-600/20 rounded-lg flex items-center justify-center shrink-0">
-            <Icon size={13} className="text-blue-400" />
+          <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+            <Icon size={13} className="text-blue-600" />
           </div>
         )}
         <div className="flex items-baseline gap-2 min-w-0">
-          <h1 className="font-bold text-white shrink-0" style={{ fontSize: '14px' }}>{title}</h1>
-          {subtitle && <p className="text-[#A0A0A0] truncate" style={{ fontSize: 'var(--font-size-label)' }}>{subtitle}</p>}
+          <h1 className="font-bold text-main shrink-0" style={{ fontSize: '14px' }}>{title}</h1>
+          {subtitle && <p className="text-dim truncate" style={{ fontSize: 'var(--font-size-label)' }}>{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -176,7 +181,7 @@ export function PageHeader({ title, subtitle, icon: Icon }: {
 
 export function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-[#202020] rounded-2xl border border-[#2A2A2A] ${className}`}>
+    <div className={`bg-surface rounded-2xl border border-base shadow-sm ${className}`}>
       {children}
     </div>
   )
@@ -189,18 +194,18 @@ export function StatCard({ label, value, sub, color = 'blue' }: {
   color?: 'blue' | 'green' | 'amber' | 'red' | 'purple'
 }) {
   const colors = {
-    blue:   { bg: 'rgba(59,130,246,0.15)',  labelBg: 'rgba(59,130,246,0.5)',  text: '#93C5FD' },
-    green:  { bg: 'rgba(34,197,94,0.15)',   labelBg: 'rgba(34,197,94,0.5)',   text: '#86EFAC' },
-    amber:  { bg: 'rgba(245,158,11,0.15)',  labelBg: 'rgba(245,158,11,0.5)',  text: '#FCD34D' },
-    red:    { bg: 'rgba(239,68,68,0.15)',   labelBg: 'rgba(239,68,68,0.5)',   text: '#FCA5A5' },
-    purple: { bg: 'rgba(139,92,246,0.15)',  labelBg: 'rgba(139,92,246,0.5)',  text: '#C4B5FD' },
+    blue:   { bg: '#EFF6FF', labelBg: '#2563EB', text: '#1D4ED8' },
+    green:  { bg: '#F0FDF4', labelBg: '#16A34A', text: '#15803D' },
+    amber:  { bg: '#FFFBEB', labelBg: '#D97706', text: '#B45309' },
+    red:    { bg: '#FEF2F2', labelBg: '#DC2626', text: '#B91C1C' },
+    purple: { bg: '#F5F3FF', labelBg: '#7C3AED', text: '#6D28D9' },
   }
   const c = colors[color]
   return (
     <div className="rounded-xl px-2 py-1.5" style={{ background: c.bg }}>
-      <p className="inline-block font-medium mb-0.5 px-1.5 py-0.5 rounded-md" style={{ fontSize: 'var(--font-size-label)', background: c.labelBg, color: '#FFFFFF' }}>{label}</p>
-      <p className="font-bold" style={{ fontSize: '14px', color: '#FFFFFF' }}>{value}</p>
-      {sub && <p className="mt-0.5" style={{ fontSize: 'var(--font-size-label)', color: 'rgba(255,255,255,0.6)' }}>{sub}</p>}
+      <p className="inline-block font-medium mb-0.5 px-1.5 py-0.5 rounded-md text-white" style={{ fontSize: 'var(--font-size-label)', background: c.labelBg }}>{label}</p>
+      <p className="font-bold" style={{ fontSize: '14px', color: c.text }}>{value}</p>
+      {sub && <p className="mt-0.5 text-dim" style={{ fontSize: 'var(--font-size-label)' }}>{sub}</p>}
     </div>
   )
 }
@@ -219,32 +224,32 @@ export function SummaryStrip({ primary, items }: {
   items: SummaryItem[]
 }) {
   const primaryColors = {
-    green:   { text: '#86EFAC', sub: '#86EFAC' },
-    red:     { text: '#FCA5A5', sub: '#FCA5A5' },
-    blue:    { text: '#93C5FD', sub: '#93C5FD' },
-    amber:   { text: '#FCD34D', sub: '#FCD34D' },
-    purple:  { text: '#C4B5FD', sub: '#C4B5FD' },
-    default: { text: '#E0E0E0', sub: '#A0A0A0' },
+    green:   { text: '#15803D', sub: '#15803D' },
+    red:     { text: '#B91C1C', sub: '#B91C1C' },
+    blue:    { text: '#1D4ED8', sub: '#1D4ED8' },
+    amber:   { text: '#B45309', sub: '#B45309' },
+    purple:  { text: '#6D28D9', sub: '#6D28D9' },
+    default: { text: '#111111', sub: '#6B7280' },
   }
   const pc = primaryColors[primary.color ?? 'default']
   return (
     <div className="flex items-stretch gap-2 px-4 py-2">
       {/* Primary metric */}
-      <div className="shrink-0 bg-[#202020] rounded-xl px-3 py-2 min-w-[110px]">
-        <p className="text-[10px] text-[#A0A0A0] mb-0.5">{primary.label}</p>
+      <div className="shrink-0 bg-surface rounded-xl px-3 py-2 min-w-[110px] border border-base shadow-sm">
+        <p className="text-[10px] text-dim mb-0.5">{primary.label}</p>
         <p className="font-bold text-[17px]" style={{ color: pc.text }}>{primary.value}</p>
         {primary.sub && (
-          <p className="text-[10px] mt-0.5" style={{ color: primary.subWarning ? '#FB923C' : 'rgba(255,255,255,0.5)' }}>
+          <p className="text-[10px] mt-0.5" style={{ color: primary.subWarning ? '#D97706' : pc.sub }}>
             {primary.sub}
           </p>
         )}
       </div>
-      {/* Secondary metrics — scroll on mobile, wrap on desktop */}
+      {/* Secondary metrics */}
       <div className="flex gap-2 overflow-x-auto scrollbar-none sm:flex-wrap sm:overflow-visible flex-1 items-stretch">
         {items.map((item, i) => (
-          <div key={i} className="shrink-0 bg-[#1A1A1A] rounded-xl px-3 py-2 min-w-[88px]">
-            <p className="text-[10px] text-[#707070] mb-0.5">{item.label}</p>
-            <p className="font-semibold text-[13px] text-[#D0D0D0]">{item.value}</p>
+          <div key={i} className="shrink-0 bg-elevated rounded-xl px-3 py-2 min-w-[88px] border border-base">
+            <p className="text-[10px] text-dim mb-0.5">{item.label}</p>
+            <p className="font-semibold text-[13px] text-main">{item.value}</p>
           </div>
         ))}
       </div>
@@ -259,12 +264,12 @@ export function EmptyState({ icon: Icon, message, onAdd }: {
   onAdd: () => void
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 py-5 px-4 bg-[#1E1E1E] rounded-xl">
-      <Icon size={20} className="text-[#505050]" />
-      <p className="text-xs text-[#707070]">{message}</p>
+    <div className="flex flex-col items-center gap-2 py-5 px-4 bg-elevated rounded-xl border border-base">
+      <Icon size={20} className="text-faint" />
+      <p className="text-xs text-dim">{message}</p>
       <button
         onClick={onAdd}
-        className="flex items-center gap-1.5 text-xs bg-blue-900/30 text-blue-400 px-3 py-1.5 rounded-lg hover:bg-blue-900/50 transition-colors"
+        className="flex items-center gap-1.5 text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
       >
         <Plus size={12} /> 新增
       </button>

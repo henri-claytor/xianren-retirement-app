@@ -13,7 +13,6 @@ function loadData(): FinancialSnapshot {
       return {
         ...DEFAULT_SNAPSHOT,
         ...parsed,
-        onboardingDone: parsed.onboardingDone ?? true, // existing users are considered onboarded
       }
     }
   } catch {}
@@ -76,19 +75,13 @@ export function useStore() {
     notify()
   }, [])
 
-  const setOnboardingDone = useCallback((done: boolean) => {
-    _data = { ..._data, onboardingDone: done }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(_data))
-    notify()
-  }, [])
-
   const saveStressTestResult = useCallback((result: FinancialSnapshot['stressTestResult']) => {
     _data = { ..._data, stressTestResult: result }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(_data))
     notify()
   }, [])
 
-  return { data: _data, updateData, resetData, snapshots: _snapshots, addSnapshot, setOnboardingDone, saveStressTestResult }
+  return { data: _data, updateData, resetData, snapshots: _snapshots, addSnapshot, saveStressTestResult }
 }
 
 export function calcSummary(data: FinancialSnapshot) {

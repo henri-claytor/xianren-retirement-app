@@ -137,7 +137,7 @@ export default function A2StressTest() {
         <Card className="p-3">
           <div className="flex items-center gap-2 mb-3">
             <Zap size={15} className="text-amber-500" />
-            <h3 className="text-sm font-semibold text-[#E0E0E0]">壓力情境快速切換</h3>
+            <h3 className="text-sm font-semibold text-main">壓力情境快速切換</h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {SCENARIOS.map(sc => {
@@ -148,37 +148,37 @@ export default function A2StressTest() {
                   onClick={() => applyScenario(sc.key)}
                   className={`text-left p-3 rounded-xl border-2 transition-all ${
                     isActive
-                      ? 'border-blue-500 bg-blue-900/25'
-                      : 'border-[#2A2A2A] bg-[#252525] hover:border-[#3A3A3A]'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-base bg-elevated hover:border-gray-400'
                   }`}
                 >
                   <div className="text-xl mb-1">{sc.icon}</div>
-                  <div className={`text-xs font-semibold ${isActive ? 'text-blue-300' : 'text-[#E0E0E0]'}`}>{sc.label}</div>
-                  <div className="text-xs text-[#A0A0A0] mt-0.5">{sc.desc}</div>
+                  <div className={`text-xs font-semibold ${isActive ? 'text-blue-600' : 'text-main'}`}>{sc.label}</div>
+                  <div className="text-xs text-dim mt-0.5">{sc.desc}</div>
                 </button>
               )
             })}
           </div>
           {activeScenario === 'longevity' && (
-            <p className="text-xs text-blue-300 bg-blue-900/20 rounded-lg px-3 py-2 mt-3">
+            <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2 mt-3">
               壽命延長 10 年：模擬至 <strong>{lifeExpected} 歲</strong>（原 {data.expectedLifespan} 歲）
             </p>
           )}
           {activeScenario === 'custom' && (
-            <p className="text-xs text-[#A0A0A0] mt-3">已手動調整參數（自訂模式）</p>
+            <p className="text-xs text-dim mt-3">已手動調整參數（自訂模式）</p>
           )}
         </Card>
 
         {/* 成功率 */}
-        <div className={`rounded-2xl p-4 ${result.successRate >= 90 ? 'bg-green-900/20 border border-green-800/30' : result.successRate >= 75 ? 'bg-amber-900/20 border border-amber-800/30' : 'bg-red-900/20 border border-red-800/30'}`}>
+        <div className={`rounded-2xl p-4 ${result.successRate >= 90 ? 'bg-green-50 border border-green-200' : result.successRate >= 75 ? 'bg-amber-50 border border-amber-200' : 'bg-red-50 border border-red-200'}`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-              <p className="font-medium text-[#D4D4D4] mb-1" style={{ fontSize: 'var(--font-size-body)' }}>退休成功率（活到 {lifeExpected} 歲資產不歸零）</p>
+              <p className="font-medium text-main mb-1" style={{ fontSize: 'var(--font-size-body)' }}>退休成功率（活到 {lifeExpected} 歲資產不歸零）</p>
               <div className="flex items-end gap-3">
-                <p className="font-bold text-white" style={{ fontSize: 'var(--font-size-display)' }}>{result.successRate.toFixed(0)}%</p>
+                <p className="font-bold text-main" style={{ fontSize: 'var(--font-size-display)' }}>{result.successRate.toFixed(0)}%</p>
                 <p className="text-2xl mb-0.5">{successEmoji}</p>
               </div>
-              <p className="text-[#A0A0A0] mt-1" style={{ fontSize: 'var(--font-size-body)' }}>
+              <p className="text-dim mt-1" style={{ fontSize: 'var(--font-size-body)' }}>
                 1000 次模擬中，{Math.round(result.successRate * 10)} 次成功活到 {lifeExpected} 歲
               </p>
             </div>
@@ -186,8 +186,8 @@ export default function A2StressTest() {
               <div className="space-y-1">
                 {['PR75', 'PR50', 'PR25', 'PR5'].map((label, i) => (
                   <div key={label} style={{ fontSize: 'var(--font-size-label)' }}>
-                    <span className="text-[#A0A0A0]">{label} 最終資產：</span>
-                    <span className="font-semibold text-[#E0E0E0]">{fmtTWD(result.percentiles[i] || 0, true)}</span>
+                    <span className="text-dim">{label} 最終資產：</span>
+                    <span className="font-semibold text-main">{fmtTWD(result.percentiles[i] || 0, true)}</span>
                   </div>
                 ))}
               </div>
@@ -199,64 +199,64 @@ export default function A2StressTest() {
               style={{ width: `${result.successRate}%` }}
             />
           </div>
-          <div className="flex justify-between mt-1 text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>
+          <div className="flex justify-between mt-1 text-dim" style={{ fontSize: 'var(--font-size-label)' }}>
             <span>0%</span><span className="text-amber-600 font-medium">75% 警戒線</span><span className="text-green-600 font-medium">90% 安全線</span><span>100%</span>
           </div>
         </div>
 
         {/* 參數設定 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-white mb-3">模擬參數微調</h3>
+          <h3 className="text-sm font-semibold text-main mb-3">模擬參數微調</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                退休初始資產：<strong className="text-white">{fmtTWD(initialAssets, true)}</strong>
+              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                退休初始資產：<strong className="text-main">{fmtTWD(initialAssets, true)}</strong>
               </label>
               <input type="range" min={1000000} max={50000000} step={500000}
                 value={initialAssets} onChange={e => handleSliderChange(setInitialAssets, Number(e.target.value))}
                 className="w-full" />
             </div>
             <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                年支出（扣被動收入後）：<strong className="text-white">{fmtTWD(annualExpense, true)}</strong>
+              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                年支出（扣被動收入後）：<strong className="text-main">{fmtTWD(annualExpense, true)}</strong>
               </label>
               <input type="range" min={240000} max={3600000} step={12000}
                 value={annualExpense} onChange={e => handleSliderChange(setAnnualExpense, Number(e.target.value))}
                 className="w-full" />
             </div>
             <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                通膨率：<strong className="text-white">{inflationRate}%</strong>
+              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                通膨率：<strong className="text-main">{inflationRate}%</strong>
               </label>
               <input type="range" min={1} max={5} step={0.5}
                 value={inflationRate} onChange={e => handleSliderChange(setInflationRate, Number(e.target.value))}
                 className="w-full" />
             </div>
             <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                平均年報酬率：<strong className="text-white">{meanReturn}%</strong>
+              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                平均年報酬率：<strong className="text-main">{meanReturn}%</strong>
               </label>
               <input type="range" min={1} max={10} step={0.5}
                 value={meanReturn} onChange={e => handleSliderChange(setMeanReturn, Number(e.target.value))}
                 className="w-full" />
             </div>
             <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                報酬率標準差（波動）：<strong className="text-white">{stdDev}%</strong>
+              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                報酬率標準差（波動）：<strong className="text-main">{stdDev}%</strong>
               </label>
               <input type="range" min={3} max={25} step={1}
                 value={stdDev} onChange={e => handleSliderChange(setStdDev, Number(e.target.value))}
                 className="w-full" />
-              <p className="text-[#A0A0A0] mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>保守組合 ~8%，全股票 ~18%</p>
+              <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>保守組合 ~8%，全股票 ~18%</p>
             </div>
             <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                額外模擬年數：<strong className="text-white">+{retirementYearsExtra} 年</strong>
+              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                額外模擬年數：<strong className="text-main">+{retirementYearsExtra} 年</strong>
               </label>
               <input type="range" min={0} max={20} step={5}
                 value={retirementYearsExtra} onChange={e => handleSliderChange(setRetirementYearsExtra, Number(e.target.value))}
                 className="w-full" />
-              <p className="text-[#A0A0A0] mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>模擬至 {lifeExpected} 歲</p>
+              <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>模擬至 {lifeExpected} 歲</p>
             </div>
           </div>
         </Card>
@@ -275,8 +275,8 @@ export default function A2StressTest() {
 
         {/* 圖表 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-white mb-1">資產路徑分布（4 種情境）</h3>
-          <p className="text-[#A0A0A0] mb-3" style={{ fontSize: 'var(--font-size-label)' }}>每次調整參數後即時重新模擬</p>
+          <h3 className="text-sm font-semibold text-main mb-1">資產路徑分布（4 種情境）</h3>
+          <p className="text-dim mb-3" style={{ fontSize: 'var(--font-size-label)' }}>每次調整參數後即時重新模擬</p>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
@@ -298,8 +298,8 @@ export default function A2StressTest() {
         </Card>
 
         {/* 說明 */}
-        <div className="bg-[#252525] rounded-xl p-3 text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>
-          <p className="font-medium text-[#D4D4D4] mb-1">關於 Monte Carlo 模擬</p>
+        <div className="bg-elevated rounded-xl p-3 text-dim" style={{ fontSize: 'var(--font-size-label)' }}>
+          <p className="font-medium text-main mb-1">關於 Monte Carlo 模擬</p>
           <p>本工具執行 1,000 次模擬，每次使用常態分布隨機產生報酬率（平均值 ± 標準差），模擬市場波動。成功率 = 活到預期壽命時資產仍大於 0 的比例。建議目標成功率 ≥ 90%。</p>
         </div>
       </div>

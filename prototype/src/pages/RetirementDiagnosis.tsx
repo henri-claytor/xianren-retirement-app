@@ -27,7 +27,7 @@ function DimensionCard({
     green: { value: 'text-green-300', bg: 'bg-green-900/20', border: 'border-green-800/30' },
     amber: { value: 'text-amber-300', bg: 'bg-amber-900/20', border: 'border-amber-800/30' },
     red:   { value: 'text-red-300',   bg: 'bg-red-900/20',   border: 'border-red-800/30' },
-    gray:  { value: 'text-[#A0A0A0]', bg: 'bg-[#202020]',    border: 'border-[#2A2A2A]' },
+    gray:  { value: 'text-dim', bg: 'bg-surface',    border: 'border-base' },
   }
   const c = colorMap[color]
   return (
@@ -158,7 +158,7 @@ export default function RetirementDiagnosis() {
           <h2 className="font-semibold text-[#D4D4D4] mb-2" style={{ fontSize: 'var(--font-size-body)' }}>行動建議</h2>
           <div className="space-y-3">
             {recommendations.map((r, i) => (
-              <div key={i} className="bg-[#202020] rounded-2xl border border-[#2A2A2A] p-4">
+              <div key={i} className="bg-surface rounded-2xl border border-base p-4">
                 <p className="font-semibold text-white text-sm mb-1">{r.title}</p>
                 <p className="text-[#A0A0A0] text-xs mb-3">{r.desc}</p>
                 <button

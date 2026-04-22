@@ -64,17 +64,17 @@ function PostCard({ post }: { post: Post }) {
           <span className="text-white font-bold text-xs">{post.authorInitial}</span>
         </div>
         <div>
-          <p className="text-white font-semibold" style={{ fontSize: '12px' }}>{post.author}</p>
-          <p className="text-[#505050]" style={{ fontSize: '10px' }}>{post.time}</p>
+          <p className="text-main font-semibold" style={{ fontSize: '12px' }}>{post.author}</p>
+          <p className="text-faint" style={{ fontSize: '10px' }}>{post.time}</p>
         </div>
       </div>
 
       {/* 內文 */}
-      <p className="text-[#D4D4D4] leading-relaxed mb-2" style={{ fontSize: '12px' }}>
+      <p className="text-main leading-relaxed mb-2" style={{ fontSize: '12px' }}>
         {isLong && !expanded ? post.content.slice(0, 80) + '...' : post.content}
         {isLong && !expanded && (
           <button
-            className="text-blue-400 ml-1 font-medium"
+            className="text-blue-600 ml-1 font-medium"
             onClick={() => setExpanded(true)}
             style={{ fontSize: '12px' }}
           >
@@ -84,11 +84,11 @@ function PostCard({ post }: { post: Post }) {
       </p>
 
       {/* 互動計數 */}
-      <div className="flex items-center gap-4 pt-2 border-t border-[#2A2A2A]">
-        <span className="flex items-center gap-1 text-[#505050]" style={{ fontSize: '11px' }}>
+      <div className="flex items-center gap-4 pt-2 border-t border-base">
+        <span className="flex items-center gap-1 text-faint" style={{ fontSize: '11px' }}>
           <ThumbsUp size={12} /> {post.likes}
         </span>
-        <span className="flex items-center gap-1 text-[#505050]" style={{ fontSize: '11px' }}>
+        <span className="flex items-center gap-1 text-faint" style={{ fontSize: '11px' }}>
           <MessageCircle size={12} /> {post.comments}
         </span>
       </div>
@@ -103,9 +103,9 @@ export default function C2CommunityFeed() {
 
       <div className="px-4 py-3 space-y-3">
         {/* 社團公告 */}
-        <div className="bg-blue-900/20 border border-blue-800/30 rounded-xl p-3">
-          <p className="font-semibold text-blue-200 mb-1" style={{ fontSize: '12px' }}>📢 社團公告</p>
-          <p className="text-blue-300/80" style={{ fontSize: '11px' }}>
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+          <p className="font-semibold text-blue-700 mb-1" style={{ fontSize: '12px' }}>📢 社團公告</p>
+          <p className="text-blue-600/80" style={{ fontSize: '11px' }}>
             歡迎分享退休規劃心得、提問財務問題、交流生活經驗。本社團為模擬展示，內容僅供參考。
           </p>
         </div>
@@ -114,7 +114,7 @@ export default function C2CommunityFeed() {
           <PostCard key={post.id} post={post} />
         ))}
 
-        <div className="text-center text-[#505050] py-4" style={{ fontSize: '11px' }}>
+        <div className="text-center text-faint py-4" style={{ fontSize: '11px' }}>
           — 以上為示範貼文 —
         </div>
       </div>

@@ -59,27 +59,27 @@ export default function B2CashflowTimeline() {
       <div className="px-4 py-2 space-y-3">
         {/* 設定 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">收入開始年齡設定</h3>
+          <h3 className="text-sm font-semibold text-main mb-3">收入開始年齡設定</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                勞保月退開始領取年齡：<strong className="text-white">{laborPensionAge} 歲</strong>
-                <span className="ml-2 text-[#A0A0A0]">月退 {fmtTWD(data.laborPension, true)}</span>
+              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                勞保月退開始領取年齡：<strong className="text-main">{laborPensionAge} 歲</strong>
+                <span className="ml-2 text-dim">月退 {fmtTWD(data.laborPension, true)}</span>
               </label>
               <input type="range" min={60} max={70} step={1}
                 value={laborPensionAge} onChange={e => setLaborPensionAge(Number(e.target.value))}
                 className="w-full" />
-              <div className="flex justify-between text-[#A0A0A0] mt-1" style={{ fontSize: 'var(--font-size-label)' }}><span>60歲</span><span>65歲</span><span>70歲</span></div>
+              <div className="flex justify-between text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}><span>60歲</span><span>65歲</span><span>70歲</span></div>
             </div>
             <div>
-              <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                勞退月退開始領取年齡：<strong className="text-white">{laborRetirementAge} 歲</strong>
-                <span className="ml-2 text-[#A0A0A0]">月退 {fmtTWD(data.laborRetirementFund, true)}</span>
+              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+                勞退月退開始領取年齡：<strong className="text-main">{laborRetirementAge} 歲</strong>
+                <span className="ml-2 text-dim">月退 {fmtTWD(data.laborRetirementFund, true)}</span>
               </label>
               <input type="range" min={60} max={70} step={1}
                 value={laborRetirementAge} onChange={e => setLaborRetirementAge(Number(e.target.value))}
                 className="w-full" />
-              <div className="flex justify-between text-[#A0A0A0] mt-1" style={{ fontSize: 'var(--font-size-label)' }}><span>60歲</span><span>65歲</span><span>70歲</span></div>
+              <div className="flex justify-between text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}><span>60歲</span><span>65歲</span><span>70歲</span></div>
             </div>
           </div>
         </Card>
@@ -103,11 +103,11 @@ export default function B2CashflowTimeline() {
 
         {/* 高提領率警示 */}
         {highWithdrawYears > 0 && (
-          <div className="bg-amber-900/20 border border-amber-800/30 rounded-xl p-3">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
             <p className="font-semibold text-amber-200 mb-1" style={{ fontSize: 'var(--font-size-body)' }}>⚠️ 提領率超過 4% 的年份</p>
             <div className="flex flex-wrap gap-2 mt-2">
               {timelineData.filter(d => d.isHighWithdrawal).map(d => (
-                <span key={d.age} className="bg-amber-900/30 text-amber-300 px-2 py-0.5 rounded-full" style={{ fontSize: 'var(--font-size-label)' }}>
+                <span key={d.age} className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full" style={{ fontSize: 'var(--font-size-label)' }}>
                   {d.age} 歲（{d.withdrawalRate}%）
                 </span>
               ))}
@@ -117,8 +117,8 @@ export default function B2CashflowTimeline() {
 
         {/* 現金流時間軸長條圖 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-[#E0E0E0] mb-1">年度現金流來源（萬/年）</h3>
-          <p className="text-[#A0A0A0] mb-3" style={{ fontSize: 'var(--font-size-label)' }}>橘色 = 投資提領率 &gt; 4%，灰色 = 合理範圍</p>
+          <h3 className="text-sm font-semibold text-main mb-1">年度現金流來源（萬/年）</h3>
+          <p className="text-dim mb-3" style={{ fontSize: 'var(--font-size-label)' }}>橘色 = 投資提領率 &gt; 4%，灰色 = 合理範圍</p>
           <div className="overflow-x-auto">
             <div style={{ minWidth: Math.max(totalYears * 28, 600) }}>
               <ResponsiveContainer width="100%" height={280}>
@@ -143,8 +143,8 @@ export default function B2CashflowTimeline() {
 
         {/* 剩餘資產趨勢 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-[#E0E0E0] mb-1">可投資資產餘額趨勢（萬）</h3>
-          <p className="text-[#A0A0A0] mb-3" style={{ fontSize: 'var(--font-size-label)' }}>線性估算，不含投資增長（保守情境）</p>
+          <h3 className="text-sm font-semibold text-main mb-1">可投資資產餘額趨勢（萬）</h3>
+          <p className="text-dim mb-3" style={{ fontSize: 'var(--font-size-label)' }}>線性估算，不含投資增長（保守情境）</p>
           <div className="overflow-x-auto">
             <div style={{ minWidth: Math.max(totalYears * 28, 600) }}>
               <ResponsiveContainer width="100%" height={200}>
@@ -168,7 +168,7 @@ export default function B2CashflowTimeline() {
           </div>
         </Card>
 
-        <div className="bg-blue-900/20 rounded-xl p-3 text-blue-300" style={{ fontSize: 'var(--font-size-label)' }}>
+        <div className="bg-blue-50 rounded-xl p-3 text-blue-700" style={{ fontSize: 'var(--font-size-label)' }}>
           <p className="font-semibold mb-1">📌 計算說明</p>
           <p>本模擬採線性估算（不含投資增長），為保守情境。4% 提領率警示基於「安全提領率」概念，實際比率超過時代表當年提領壓力較大，建議搭配 A2 壓力測試評估。</p>
         </div>

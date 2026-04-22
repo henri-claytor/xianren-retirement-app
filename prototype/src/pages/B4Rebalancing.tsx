@@ -85,10 +85,10 @@ export default function B4Rebalancing() {
   function DiffTag({ diff }: { diff: number }) {
     const abs = Math.abs(diff)
     if (abs <= TOLERANCE)
-      return <span className="text-xs bg-green-900/30 text-green-300 px-2 py-0.5 rounded-full">🟢 達標</span>
+      return <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">🟢 達標</span>
     const isOver = diff > 0
     return (
-      <span className={`text-xs px-2 py-0.5 rounded-full ${abs > 15 ? 'bg-red-900/30 text-red-300' : 'bg-amber-900/30 text-amber-300'}`}>
+      <span className={`text-xs px-2 py-0.5 rounded-full ${abs > 15 ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
         {abs > 15 ? '🔴' : '🟡'} {isOver ? '超配' : '不足'} {abs.toFixed(1)}%
       </span>
     )
@@ -100,7 +100,7 @@ export default function B4Rebalancing() {
 
       <div className="px-4 py-2 space-y-3">
         {/* 目前階段 */}
-        <div className="bg-gradient-to-r from-teal-600 to-cyan-600 rounded-2xl p-4 text-white">
+        <div className="bg-gradient-to-r from-teal-600 to-cyan-600 rounded-2xl p-4 text-main">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-teal-200 mb-1" style={{ fontSize: 'var(--font-size-label)' }}>目前所在階段</p>
@@ -128,15 +128,15 @@ export default function B4Rebalancing() {
 
         {/* 整體判斷 */}
         {isBalanced ? (
-          <div className="bg-green-900/20 border-2 border-green-800/30 rounded-2xl p-4 flex items-center gap-3">
+          <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 flex items-center gap-3">
             <span className="text-3xl">🟢</span>
             <div>
               <p className="font-bold text-green-200">配置平衡，暫無需再平衡</p>
-              <p className="text-green-400 mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>各桶偏差均在 {TOLERANCE}% 容忍區間內</p>
+              <p className="text-green-600 mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>各桶偏差均在 {TOLERANCE}% 容忍區間內</p>
             </div>
           </div>
         ) : (
-          <div className="bg-amber-900/20 border-2 border-amber-800/30 rounded-2xl p-3">
+          <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-2xl">⚖️</span>
               <p className="font-bold text-amber-200">建議進行再平衡</p>
@@ -154,7 +154,7 @@ export default function B4Rebalancing() {
 
         {/* 目前 vs 建議長條圖 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">目前 vs 建議比例（偏差 &gt; {TOLERANCE}% 標示）</h3>
+          <h3 className="text-sm font-semibold text-main mb-3">目前 vs 建議比例（偏差 &gt; {TOLERANCE}% 標示）</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={barData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
@@ -173,7 +173,7 @@ export default function B4Rebalancing() {
               <Bar dataKey="建議" fill="#3A3A3A" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
-          <p className="text-[#A0A0A0] mt-2 text-center" style={{ fontSize: 'var(--font-size-label)' }}>紅色 = 偏差超過容忍區間（±{TOLERANCE}%）</p>
+          <p className="text-dim mt-2 text-center" style={{ fontSize: 'var(--font-size-label)' }}>紅色 = 偏差超過容忍區間（±{TOLERANCE}%）</p>
         </Card>
 
         {/* 各桶明細 */}
@@ -186,25 +186,25 @@ export default function B4Rebalancing() {
             <Card key={b.label} className="p-3">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: b.color }} />
-                <span className="font-semibold text-[#E0E0E0] text-sm">{b.label}</span>
+                <span className="font-semibold text-main text-sm">{b.label}</span>
                 <DiffTag diff={b.diff} />
               </div>
               <div className="space-y-1.5" style={{ fontSize: 'var(--font-size-body)' }}>
                 <div className="flex justify-between">
-                  <span className="text-[#A0A0A0]">目前</span>
+                  <span className="text-dim">目前</span>
                   <span className="font-semibold">{fmtTWD(b.current, true)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#A0A0A0]">建議目標</span>
+                  <span className="text-dim">建議目標</span>
                   <span>{fmtTWD(b.target, true)}</span>
                 </div>
-                <div className="flex justify-between pt-1 border-t border-[#2A2A2A]">
-                  <span className="text-[#A0A0A0]">操作</span>
+                <div className="flex justify-between pt-1 border-t border-base">
+                  <span className="text-dim">操作</span>
                   {Math.abs(b.delta) < 10000
-                    ? <span className="text-green-400 text-xs">已達標</span>
+                    ? <span className="text-green-600 text-xs">已達標</span>
                     : b.delta > 0
-                    ? <span className="text-red-400 text-xs">移出 {fmtTWD(b.delta, true)}</span>
-                    : <span className="text-blue-400 text-xs">補充 {fmtTWD(Math.abs(b.delta), true)}</span>
+                    ? <span className="text-red-600 text-xs">移出 {fmtTWD(b.delta, true)}</span>
+                    : <span className="text-blue-600 text-xs">補充 {fmtTWD(Math.abs(b.delta), true)}</span>
                   }
                 </div>
               </div>

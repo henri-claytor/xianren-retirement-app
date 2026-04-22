@@ -58,22 +58,22 @@ export default function B1WithdrawalPlan() {
       <div className="px-4 py-2 space-y-3">
         {/* 狀態卡 */}
         <div className={`rounded-2xl p-5 border-2 ${
-          statusColor === 'green' ? 'bg-green-900/20 border-green-800/30' :
-          statusColor === 'amber' ? 'bg-amber-900/20 border-amber-800/30' :
-          'bg-red-900/20 border-red-800/30'
+          statusColor === 'green' ? 'bg-green-50 border-green-200' :
+          statusColor === 'amber' ? 'bg-amber-50 border-amber-200' :
+          'bg-red-50 border-red-200'
         }`}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-medium text-[#D4D4D4] mb-1">提領計畫總評</p>
+              <p className="text-sm font-medium text-main mb-1">提領計畫總評</p>
               <div className="flex items-center gap-2">
                 <span className="text-2xl">{statusEmoji}</span>
-                <p className="font-bold text-white" style={{ fontSize: '15px' }}>{statusLabel}</p>
+                <p className="font-bold text-main" style={{ fontSize: '15px' }}>{statusLabel}</p>
               </div>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>提領期間目標</p>
-              <p className="font-bold text-[#E0E0E0]" style={{ fontSize: '16px' }}>{data.retirementAge} ~ {data.expectedLifespan} 歲</p>
-              <p className="text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>{retirementMonths} 個月</p>
+              <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>提領期間目標</p>
+              <p className="font-bold text-main" style={{ fontSize: '16px' }}>{data.retirementAge} ~ {data.expectedLifespan} 歲</p>
+              <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>{retirementMonths} 個月</p>
             </div>
           </div>
         </div>
@@ -97,10 +97,10 @@ export default function B1WithdrawalPlan() {
 
         {/* 月支出滑桿 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">月支出調整（即時更新各桶支撐時間）</h3>
-          <label className="text-[#A0A0A0] mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+          <h3 className="text-sm font-semibold text-main mb-3">月支出調整（即時更新各桶支撐時間）</h3>
+          <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
             月支出假設：<strong>{fmtTWD(monthlyExpenseAdj, true)}</strong>
-            <span className="ml-2 text-[#A0A0A0]">（S1 原始值：{fmtTWD(s.monthlyExpense, true)}）</span>
+            <span className="ml-2 text-dim">（S1 原始值：{fmtTWD(s.monthlyExpense, true)}）</span>
           </label>
           <input
             type="range"
@@ -109,7 +109,7 @@ export default function B1WithdrawalPlan() {
             onChange={e => setMonthlyExpenseAdj(Number(e.target.value))}
             className="w-full"
           />
-          <div className="flex justify-between text-[#A0A0A0] mt-1" style={{ fontSize: 'var(--font-size-label)' }}>
+          <div className="flex justify-between text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}>
             <span>1萬</span><span>10萬</span><span>20萬</span>
           </div>
         </Card>
@@ -117,8 +117,8 @@ export default function B1WithdrawalPlan() {
         {/* 各桶支撐月數長條圖 */}
         {!noGap && (
           <Card className="p-3">
-            <h3 className="text-sm font-semibold text-[#E0E0E0] mb-1">各桶可支撐月數</h3>
-            <p className="text-[#A0A0A0] mb-3" style={{ fontSize: 'var(--font-size-label)' }}>紅色虛線 = 退休期間目標（{retirementMonths} 個月）</p>
+            <h3 className="text-sm font-semibold text-main mb-1">各桶可支撐月數</h3>
+            <p className="text-dim mb-3" style={{ fontSize: 'var(--font-size-label)' }}>紅色虛線 = 退休期間目標（{retirementMonths} 個月）</p>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={chartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
@@ -142,7 +142,7 @@ export default function B1WithdrawalPlan() {
 
         {/* 各桶耗盡年齡明細 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">三桶金提領順序：短 → 中 → 長</h3>
+          <h3 className="text-sm font-semibold text-main mb-3">三桶金提領順序：短 → 中 → 長</h3>
           <div className="space-y-3">
             {[
               {
@@ -172,26 +172,26 @@ export default function B1WithdrawalPlan() {
                 prevMonths: shortMonths + midMonths,
               },
             ].map((b, i) => (
-              <div key={i} className="flex items-start justify-between bg-[#252525] rounded-xl p-3">
+              <div key={i} className="flex items-start justify-between bg-elevated rounded-xl p-3">
                 <div>
-                  <p className="font-semibold text-[#E0E0E0]" style={{ fontSize: 'var(--font-size-body)' }}>{b.label}</p>
-                  <p className="text-[#A0A0A0] mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>{b.desc}</p>
-                  <p className="text-[#A0A0A0] mt-1" style={{ fontSize: 'var(--font-size-label)' }}>金額：{fmtTWD(b.amount, true)}</p>
+                  <p className="font-semibold text-main" style={{ fontSize: 'var(--font-size-body)' }}>{b.label}</p>
+                  <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>{b.desc}</p>
+                  <p className="text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}>金額：{fmtTWD(b.amount, true)}</p>
                 </div>
                 <div className="text-right">
                   {noGap ? (
-                    <p className="text-sm font-bold text-green-400">無需提領</p>
+                    <p className="text-sm font-bold text-green-600">無需提領</p>
                   ) : isFinite(b.months) ? (
                     <>
-                      <p className="font-bold text-white" style={{ fontSize: 'var(--font-size-body)' }}>
+                      <p className="font-bold text-main" style={{ fontSize: 'var(--font-size-body)' }}>
                         {Math.floor(b.months / 12)} 年 {Math.floor(b.months % 12)} 月
                       </p>
-                      <p className="text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>
+                      <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>
                         耗盡於 {ageLabel(b.months, (b as any).prevMonths ?? 0)}
                       </p>
                     </>
                   ) : (
-                    <p className="text-sm font-bold text-green-400">可支撐至壽命結束</p>
+                    <p className="text-sm font-bold text-green-600">可支撐至壽命結束</p>
                   )}
                 </div>
               </div>
@@ -200,7 +200,7 @@ export default function B1WithdrawalPlan() {
         </Card>
 
         {/* 說明 */}
-        <div className="bg-blue-900/20 rounded-xl p-3 text-blue-300" style={{ fontSize: 'var(--font-size-label)' }}>
+        <div className="bg-blue-50 rounded-xl p-3 text-blue-700" style={{ fontSize: 'var(--font-size-label)' }}>
           <p className="font-semibold mb-1">📌 計算說明</p>
           <p>本試算採線性計算（不含投資增長），為保守估計。實際資產可能因投資報酬而持續增長，建議搭配 A2 壓力測試綜合評估。</p>
         </div>

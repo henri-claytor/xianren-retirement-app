@@ -1,7 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
-import Onboarding from './pages/Onboarding'
 import RetirementDiagnosis from './pages/RetirementDiagnosis'
 import S1FinancialInput from './pages/S1FinancialInput'
 import S2BucketOverview from './pages/S2BucketOverview'
@@ -16,44 +15,29 @@ import B3AlertThresholds from './pages/B3AlertThresholds'
 import B4Rebalancing from './pages/B4Rebalancing'
 import C1ContentFeed from './pages/C1ContentFeed'
 import C2CommunityFeed from './pages/C2CommunityFeed'
-import { useStore } from './store/useStore'
-
-function AppRoutes() {
-  const { data } = useStore()
-
-  return (
-    <Routes>
-      {/* Onboarding — outside Layout (full screen) */}
-      <Route path="/onboarding" element={<Onboarding />} />
-
-      {/* Main app — inside Layout */}
-      <Route path="/" element={<Layout />}>
-        <Route index element={
-          data.onboardingDone ? <Dashboard /> : <Navigate to="/onboarding" replace />
-        } />
-        <Route path="diagnosis" element={<RetirementDiagnosis />} />
-        <Route path="s1" element={<S1FinancialInput />} />
-        <Route path="s2" element={<S2BucketOverview />} />
-        <Route path="s3" element={<S3InflationSimulator />} />
-        <Route path="a1" element={<A1RetirementGoal />} />
-        <Route path="a2" element={<A2StressTest />} />
-        <Route path="a3" element={<A3AssetAllocation />} />
-        <Route path="a4" element={<A4PeriodicTracking />} />
-        <Route path="b1" element={<B1WithdrawalPlan />} />
-        <Route path="b2" element={<B2CashflowTimeline />} />
-        <Route path="b3" element={<B3AlertThresholds />} />
-        <Route path="b4" element={<B4Rebalancing />} />
-        <Route path="c1" element={<C1ContentFeed />} />
-        <Route path="c2" element={<C2CommunityFeed />} />
-      </Route>
-    </Routes>
-  )
-}
 
 export default function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="diagnosis" element={<RetirementDiagnosis />} />
+          <Route path="s1" element={<S1FinancialInput />} />
+          <Route path="s2" element={<S2BucketOverview />} />
+          <Route path="s3" element={<S3InflationSimulator />} />
+          <Route path="a1" element={<A1RetirementGoal />} />
+          <Route path="a2" element={<A2StressTest />} />
+          <Route path="a3" element={<A3AssetAllocation />} />
+          <Route path="a4" element={<A4PeriodicTracking />} />
+          <Route path="b1" element={<B1WithdrawalPlan />} />
+          <Route path="b2" element={<B2CashflowTimeline />} />
+          <Route path="b3" element={<B3AlertThresholds />} />
+          <Route path="b4" element={<B4Rebalancing />} />
+          <Route path="c1" element={<C1ContentFeed />} />
+          <Route path="c2" element={<C2CommunityFeed />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   )
 }

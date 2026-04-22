@@ -44,9 +44,9 @@ function HealthBadge({ ratio, target }: { ratio: number; target: string }) {
   const isWarn = ratio > 0 && ratio < 5
   return (
     <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-      isOk ? 'bg-green-900/30 text-green-300' :
-      isWarn ? 'bg-amber-900/30 text-amber-300' :
-      'bg-red-900/30 text-red-300'
+      isOk ? 'bg-green-50 text-green-700' :
+      isWarn ? 'bg-amber-50 text-amber-700' :
+      'bg-red-50 text-red-700'
     }`}>
       {isOk ? '🟢' : isWarn ? '🟡' : '🔴'}
       {ratio.toFixed(1)}% | {target}
@@ -160,8 +160,8 @@ export default function S2BucketOverview() {
       <div className="px-4 py-2 space-y-3">
         {/* 短期桶不足警示 */}
         {shortDeficit > 0 && (
-          <div className="bg-amber-900/20 border border-amber-800/30 rounded-xl p-4 flex items-start gap-3">
-            <AlertTriangle size={18} className="text-amber-400 shrink-0 mt-0.5" />
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+            <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-amber-200">短期桶不足</p>
               <p className="text-xs text-amber-300 mt-0.5">
@@ -185,12 +185,12 @@ export default function S2BucketOverview() {
                   </div>
                   <HealthBadge ratio={bucket.ratio} target={cfg.target} />
                 </div>
-                <p className="font-bold text-white mb-0.5" style={{ fontSize: '18px' }}>{fmtTWD(bucket.value, true)}</p>
-                <p className="text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>{cfg.desc}</p>
-                <div className="mt-3 h-1.5 bg-[#2A2A2A] rounded-full overflow-hidden">
+                <p className="font-bold text-main mb-0.5" style={{ fontSize: '18px' }}>{fmtTWD(bucket.value, true)}</p>
+                <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>{cfg.desc}</p>
+                <div className="mt-3 h-1.5 bg-elevated rounded-full overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${Math.min(bucket.ratio, 100)}%`, backgroundColor: cfg.color }} />
                 </div>
-                <p className="text-[#A0A0A0] mt-1" style={{ fontSize: 'var(--font-size-label)' }}>{bucket.ratio.toFixed(1)}% 可投資資產</p>
+                <p className="text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}>{bucket.ratio.toFixed(1)}% 可投資資產</p>
               </Card>
             )
           })}
@@ -198,13 +198,13 @@ export default function S2BucketOverview() {
 
         {/* 不動產自住（獨立呈現） */}
         {data.realEstateSelfUse > 0 && (
-          <div className="bg-[#252525] border border-[#2A2A2A] rounded-xl p-3">
+          <div className="bg-elevated border border-base rounded-xl p-3">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-semibold text-[#D4D4D4]">🏠 不動產自住</span>
-              <span className="px-2 py-0.5 bg-[#2A2A2A] rounded-full text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>獨立呈現，不計入三桶</span>
+              <span className="text-sm font-semibold text-main">🏠 不動產自住</span>
+              <span className="px-2 py-0.5 bg-elevated rounded-full text-dim" style={{ fontSize: 'var(--font-size-label)' }}>獨立呈現，不計入三桶</span>
             </div>
             <p className="font-bold text-[#E0E0E0]" style={{ fontSize: '16px' }}>{fmtTWD(data.realEstateSelfUse, true)}</p>
-            <p className="text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>自住房產不計入可投資資產計算</p>
+            <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>自住房產不計入可投資資產計算</p>
           </div>
         )}
 
@@ -233,7 +233,7 @@ export default function S2BucketOverview() {
             <div className="flex items-center justify-between mb-1">
               <div>
                 <h3 className="text-sm font-semibold text-[#E0E0E0]">目前 vs 建議比例</h3>
-                <p className="text-[#707070] mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
+                <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
                   {suggested.label}・建議 {suggested.short}/{suggested.mid}/{suggested.long}
                 </p>
               </div>
@@ -242,7 +242,7 @@ export default function S2BucketOverview() {
                 className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${
                   showAllocationInfo
                     ? 'bg-blue-900/40 text-blue-300 border border-blue-700/50'
-                    : 'bg-[#2A2A2A] text-[#A0A0A0] hover:text-[#D4D4D4] border border-[#333]'
+                    : 'bg-elevated text-dim hover:text-main border border-base'
                 }`}
               >
                 <Info size={12} />
@@ -252,14 +252,14 @@ export default function S2BucketOverview() {
 
             {/* 可展開的條件說明表 */}
             <div className={`overflow-hidden transition-all duration-300 ${showAllocationInfo ? 'max-h-96 opacity-100 mb-3' : 'max-h-0 opacity-0'}`}>
-              <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-3 mt-2">
-                <p className="text-xs font-semibold text-[#A0A0A0] mb-2">建議比例依距退休年數調整</p>
+              <div className="bg-elevated border border-base rounded-xl p-3 mt-2">
+                <p className="text-xs font-semibold text-dim mb-2">建議比例依距退休年數調整</p>
                 <table className="w-full" style={{ fontSize: 'var(--font-size-label)' }}>
                   <thead>
-                    <tr className="text-[#707070] border-b border-[#2A2A2A]">
+                    <tr className="text-dim border-b border-base">
                       <th className="text-left pb-1.5 font-medium">距退休</th>
-                      <th className="text-center pb-1.5 font-medium text-blue-400">短期</th>
-                      <th className="text-center pb-1.5 font-medium text-purple-400">中期</th>
+                      <th className="text-center pb-1.5 font-medium text-blue-600">短期</th>
+                      <th className="text-center pb-1.5 font-medium text-purple-600">中期</th>
                       <th className="text-center pb-1.5 font-medium text-orange-400">長期</th>
                       <th className="text-left pb-1.5 font-medium">階段</th>
                     </tr>
@@ -270,16 +270,16 @@ export default function S2BucketOverview() {
                       return (
                         <tr
                           key={stage.range}
-                          className={`border-b border-[#222] last:border-0 ${isCurrent ? 'bg-blue-900/30' : ''}`}
+                          className={`border-b border-base last:border-0 ${isCurrent ? 'bg-blue-50' : ''}`}
                         >
-                          <td className={`py-1.5 pr-2 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-[#A0A0A0]'}`}>
+                          <td className={`py-1.5 pr-2 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-dim'}`}>
                             {stage.range}
-                            {isCurrent && <span className="ml-1 text-blue-400">◀</span>}
+                            {isCurrent && <span className="ml-1 text-blue-600">◀</span>}
                           </td>
-                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-[#D4D4D4]'}`}>{stage.short}%</td>
-                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-[#D4D4D4]'}`}>{stage.mid}%</td>
-                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-[#D4D4D4]'}`}>{stage.long}%</td>
-                          <td className={`py-1.5 pl-2 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-[#707070]'}`}>{stage.label}</td>
+                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-main'}`}>{stage.short}%</td>
+                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-main'}`}>{stage.mid}%</td>
+                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-main'}`}>{stage.long}%</td>
+                          <td className={`py-1.5 pl-2 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-dim'}`}>{stage.label}</td>
                         </tr>
                       )
                     })}
@@ -303,38 +303,38 @@ export default function S2BucketOverview() {
                 <Bar dataKey="長期桶" fill="#f97316" stackId="a" />
               </BarChart>
             </ResponsiveContainer>
-            <p className="text-[#A0A0A0] mt-2 text-center" style={{ fontSize: 'var(--font-size-label)' }}>建議比例依您的退休階段自動調整，僅供參考</p>
+            <p className="text-dim mt-2 text-center" style={{ fontSize: 'var(--font-size-label)' }}>建議比例依您的退休階段自動調整，僅供參考</p>
           </Card>
         </div>
 
         {/* 持倉明細 */}
         <Card className="p-3">
           <h3 className="text-sm font-semibold text-[#E0E0E0] mb-1">持倉明細（點擊展開）</h3>
-          <p className="text-[#A0A0A0] mb-3" style={{ fontSize: 'var(--font-size-label)' }}>可點擊短|中|長按鈕手動調整歸桶</p>
+          <p className="text-dim mb-3" style={{ fontSize: 'var(--font-size-label)' }}>可點擊短|中|長按鈕手動調整歸桶</p>
           <div className="space-y-3">
             {bucketsData.map(bucket => {
               const cfg = BUCKET_CONFIG[bucket.key]
               const isExpanded = expandedBucket === bucket.key
               return (
-                <div key={bucket.key} className="border border-[#2A2A2A] rounded-xl overflow-hidden">
+                <div key={bucket.key} className="border border-base rounded-xl overflow-hidden">
                   <button
                     onClick={() => setExpandedBucket(isExpanded ? null : bucket.key)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-[#252525] hover:bg-[#2F2F2F] transition-colors"
+                    className="w-full flex items-center justify-between px-4 py-3 bg-elevated hover:bg-elevated transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.color }} />
                       <span className="text-sm font-semibold text-[#E0E0E0]">{cfg.label}</span>
-                      <span className="text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>{bucket.items.length} 項</span>
+                      <span className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>{bucket.items.length} 項</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-bold text-[#E0E0E0]">{fmtTWD(bucket.value, true)}</span>
-                      {isExpanded ? <ChevronUp size={16} className="text-[#A0A0A0]" /> : <ChevronDown size={16} className="text-[#A0A0A0]" />}
+                      {isExpanded ? <ChevronUp size={16} className="text-dim" /> : <ChevronDown size={16} className="text-dim" />}
                     </div>
                   </button>
                   {isExpanded && (
-                    <div className="divide-y divide-[#2A2A2A]">
+                    <div className="divide-y divide-gray-200">
                       {bucket.items.length === 0 ? (
-                        <p className="text-xs text-[#A0A0A0] text-center py-4">此桶暫無持倉</p>
+                        <p className="text-xs text-dim text-center py-4">此桶暫無持倉</p>
                       ) : (
                         bucket.items.map(item => {
                           const hasOverride = !!overrides[item.id]
@@ -345,18 +345,18 @@ export default function S2BucketOverview() {
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <p className="text-[#E0E0E0]" style={{ fontSize: 'var(--font-size-body)' }}>{item.name}</p>
                                   {item.bondRatioMissing && (
-                                    <span className="text-amber-400 bg-amber-900/30 border border-amber-800/30 px-1.5 py-0.5 rounded" style={{ fontSize: 'var(--font-size-label)' }}>⚠️ 資料待補</span>
+                                    <span className="text-amber-600 bg-amber-900/30 border border-amber-800/30 px-1.5 py-0.5 rounded" style={{ fontSize: 'var(--font-size-label)' }}>⚠️ 資料待補</span>
                                   )}
                                   {hasOverride && (
-                                    <span className="text-blue-400 bg-blue-900/30 border border-blue-800/30 px-1.5 py-0.5 rounded" style={{ fontSize: 'var(--font-size-label)' }}>已手動調整</span>
+                                    <span className="text-blue-600 bg-blue-50 border border-blue-800/30 px-1.5 py-0.5 rounded" style={{ fontSize: 'var(--font-size-label)' }}>已手動調整</span>
                                   )}
                                 </div>
-                                <p className="text-[#A0A0A0] mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>{item.reason}</p>
+                                <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>{item.reason}</p>
                               </div>
                               <div className="flex items-center gap-3 ml-3 shrink-0">
                                 <div className="text-right">
                                   <p className="font-semibold text-[#E0E0E0]" style={{ fontSize: 'var(--font-size-body)' }}>{fmtTWD(item.value, true)}</p>
-                                  <p className="text-[#A0A0A0]" style={{ fontSize: 'var(--font-size-label)' }}>
+                                  <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>
                                     {totalInvestable > 0 ? ((item.value / totalInvestable) * 100).toFixed(1) : 0}%
                                   </p>
                                 </div>
@@ -375,7 +375,7 @@ export default function S2BucketOverview() {
                                           className={`px-2 py-1 rounded font-medium transition-colors ${
                                             isActive
                                               ? 'bg-blue-600 text-white'
-                                              : 'bg-[#252525] text-[#A0A0A0] hover:bg-[#2F2F2F]'
+                                              : 'bg-elevated text-dim hover:bg-elevated'
                                           }`}
                                         >
                                           {BUCKET_LABELS[b]}
@@ -404,17 +404,17 @@ export default function S2BucketOverview() {
             <div>
               <p className="font-semibold mb-1">🔵 短期桶</p>
               <p>現金、活存、定存</p>
-              <p className="text-blue-400/70 mt-1">功能：緊急備用金，隨時可用</p>
+              <p className="text-blue-600/70 mt-1">功能：緊急備用金，隨時可用</p>
             </div>
             <div>
               <p className="font-semibold mb-1">🟣 中期桶</p>
               <p>儲蓄險、ETF 債券比例 ≥ 55%、基金債券比例 ≥ 55%</p>
-              <p className="text-blue-400/70 mt-1">功能：穩定補充短期桶</p>
+              <p className="text-blue-600/70 mt-1">功能：穩定補充短期桶</p>
             </div>
             <div>
               <p className="font-semibold mb-1">🟠 長期桶</p>
               <p>個股（全部）、ETF 債券比例 &lt; 55%、基金債券比例 &lt; 55%、出租不動產</p>
-              <p className="text-blue-400/70 mt-1">功能：長期增值，對抗通膨</p>
+              <p className="text-blue-600/70 mt-1">功能：長期增值，對抗通膨</p>
             </div>
           </div>
         </div>

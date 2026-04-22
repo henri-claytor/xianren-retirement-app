@@ -10,36 +10,36 @@
   --font-size-label:   11px;
   --font-size-caption: 10px;
 
-  /* ── Background layers ──────────────────── */
-  --color-bg:          #0F0F0F;
-  --color-surface:     #202020;
-  --color-elevated:    #252525;
-  --color-border:      #2A2A2A;
-  --color-hover:       #2F2F2F;
+  /* ── Background layers (Light Theme) ────── */
+  --color-bg:          #F4F5F7;
+  --color-surface:     #FFFFFF;
+  --color-elevated:    #F0F1F3;
+  --color-border:      #E4E4E7;
+  --color-hover:       #D1D5DB;
 
-  /* ── Text ───────────────────────────────── */
-  --color-text-primary:   #FFFFFF;
-  --color-text-secondary: #D4D4D4;
-  --color-text-muted:     #A0A0A0;
-  --color-text-disabled:  #454545;
+  /* ── Text (Light Theme) ─────────────────── */
+  --color-text-primary:   #111111;
+  --color-text-secondary: #374151;
+  --color-text-muted:     #6B7280;
+  --color-text-disabled:  #9CA3AF;
 
   /* ── Accent ─────────────────────────────── */
-  --color-accent:        #3B82F6;
-  --color-accent-hover:  #2563EB;
-  --color-accent-subtle: rgba(59, 130, 246, 0.15);
+  --color-accent:        #2563EB;
+  --color-accent-hover:  #1D4ED8;
+  --color-accent-subtle: rgba(37, 99, 235, 0.10);
 
   /* ── Status ─────────────────────────────── */
-  --color-success:    #22C55E;
-  --color-warning:    #F59E0B;
-  --color-danger:     #EF4444;
-  --color-success-bg: rgba(34,  197, 94,  0.12);
-  --color-warning-bg: rgba(245, 158, 11,  0.12);
-  --color-danger-bg:  rgba(239, 68,  68,  0.12);
+  --color-success:    #16A34A;
+  --color-warning:    #D97706;
+  --color-danger:     #DC2626;
+  --color-success-bg: rgba(22,  163, 74,  0.10);
+  --color-warning-bg: rgba(217, 119, 6,   0.10);
+  --color-danger-bg:  rgba(220, 38,  38,  0.10);
 
   /* ── 三桶金品牌色 ────────────────────────── */
-  --color-short: #3B82F6;
-  --color-mid:   #8B5CF6;
-  --color-long:  #F97316;
+  --color-short: #2563EB;
+  --color-mid:   #7C3AED;
+  --color-long:  #EA580C;
 
   /* ── Spacing ─────────────────────────────── */
   --space-page:    16px;
@@ -49,6 +49,16 @@
   --space-tight:    8px;
   --space-xs:       4px;
 }
+
+/* ── Semantic Tailwind utilities ────────────── */
+@utility bg-app      { background-color: var(--color-bg); }
+@utility bg-surface  { background-color: var(--color-surface); }
+@utility bg-elevated { background-color: var(--color-elevated); }
+@utility border-base { border-color: var(--color-border); }
+@utility border-subtle { border-color: var(--color-hover); }
+@utility text-main   { color: var(--color-text-primary); }
+@utility text-dim    { color: var(--color-text-muted); }
+@utility text-faint  { color: var(--color-text-disabled); }
 
 body {
   margin: 0;
@@ -63,7 +73,7 @@ body {
 }
 
 input[type="range"] {
-  accent-color: #3b82f6;
+  accent-color: #D97706;
 }
 
 /* Hide scrollbar but keep scrollable */
@@ -75,7 +85,7 @@ input[type="range"] {
   display: none;
 }
 
-/* Dark select/input base */
+/* Light select/input base */
 select {
-  color-scheme: dark;
+  color-scheme: light;
 }
