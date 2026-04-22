@@ -97,7 +97,9 @@ export default function Layout() {
                 return (
                   <span
                     key={`header-${idx}`}
-                    className="shrink-0 px-3 py-2.5 text-[10px] text-faint font-semibold uppercase tracking-wider select-none pointer-events-none"
+                    className={`shrink-0 py-2.5 text-[9px] text-faint font-semibold uppercase tracking-wider select-none pointer-events-none ${
+                      idx > 0 ? 'border-l border-gray-300 ml-3 pl-3 pr-1' : 'px-2'
+                    }`}
                   >
                     {item.label}
                   </span>
@@ -186,6 +188,7 @@ export function Card({ children, className = '' }: { children: React.ReactNode; 
     </div>
   )
 }
+
 
 export function StatCard({ label, value, sub, color = 'blue' }: {
   label: string

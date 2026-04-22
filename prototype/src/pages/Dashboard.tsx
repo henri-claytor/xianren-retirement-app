@@ -395,9 +395,9 @@ function VerdictCard({
           <div className={`grid gap-4 mb-4 ${(state === 'early' || state === 'behind') ? 'grid-cols-3' : 'grid-cols-2'}`}>
             {/* early 狀態：提早退休 delta */}
             {state === 'early' && (
-              <div>
+              <div className="min-w-0">
                 <p className="text-[10px] text-dim mb-0.5">提早退休</p>
-                <p className="text-lg tabular-nums leading-none">
+                <p className="text-sm tabular-nums leading-snug whitespace-nowrap overflow-hidden">
                   <span className="text-main">{earlyYears}年</span>
                   <span className="text-faint mx-1">→</span>
                   <span className="text-amber-600 font-semibold">
@@ -413,9 +413,9 @@ function VerdictCard({
             )}
             {/* behind 狀態：預計延後 delta */}
             {state === 'behind' && (
-              <div>
+              <div className="min-w-0">
                 <p className="text-[10px] text-dim mb-0.5">預計延後</p>
-                <p className="text-lg tabular-nums leading-none">
+                <p className="text-sm tabular-nums leading-snug whitespace-nowrap overflow-hidden">
                   <span className="text-main">{behindYears}年</span>
                   <span className="text-faint mx-1">→</span>
                   <span className="text-amber-600 font-semibold">
@@ -430,9 +430,9 @@ function VerdictCard({
               </div>
             )}
             {/* 達成率 delta（所有狀態） */}
-            <div>
+            <div className="min-w-0">
               <p className="text-[10px] text-dim mb-0.5">達成率</p>
-              <p className="text-lg tabular-nums leading-none">
+              <p className="text-sm tabular-nums leading-snug whitespace-nowrap overflow-hidden">
                 <span className="text-main">{clampedActualRate.toFixed(0)}%</span>
                 <span className="text-faint mx-1.5">→</span>
                 <span className="text-amber-600 font-semibold">
@@ -446,9 +446,9 @@ function VerdictCard({
               )}
             </div>
             {/* 退休時預估資產 delta（所有狀態） */}
-            <div>
+            <div className="min-w-0">
               <p className="text-[10px] text-dim mb-0.5">退休時預估資產</p>
-              <p className="text-lg tabular-nums leading-none">
+              <p className="text-sm tabular-nums leading-snug whitespace-nowrap overflow-hidden">
                 <span className="text-main">{fmtTWD(assetsAtRetirement, true)}</span>
                 <span className="text-faint mx-1.5">→</span>
                 <span className="text-amber-600 font-semibold">{fmtTWD(whatIfAssets, true)}</span>

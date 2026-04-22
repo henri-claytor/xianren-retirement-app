@@ -10,18 +10,18 @@
   --font-size-label:   11px;
   --font-size-caption: 10px;
 
-  /* ── Background layers (Light Theme) ────── */
-  --color-bg:          #F4F5F7;
-  --color-surface:     #FFFFFF;
-  --color-elevated:    #F0F1F3;
-  --color-border:      #E4E4E7;
-  --color-hover:       #D1D5DB;
+  /* ── Background layers (Light Theme / iOS Finance) ─ */
+  --color-bg:          #F2F2F7;   /* iOS system gray 6 */
+  --color-surface:     #FFFFFF;   /* 卡片（配合 shadow-sm 浮起） */
+  --color-elevated:    #F9F9F9;   /* 比 bg 淺，hover / input 背景 */
+  --color-border:      #C6C6C8;   /* iOS separator */
+  --color-hover:       #EBEBF0;   /* hover 狀態背景 */
 
-  /* ── Text (Light Theme) ─────────────────── */
-  --color-text-primary:   #111111;
-  --color-text-secondary: #374151;
-  --color-text-muted:     #6B7280;
-  --color-text-disabled:  #9CA3AF;
+  /* ── Text (Light Theme / iOS labels) ───────────── */
+  --color-text-primary:   #1C1C1E;   /* iOS label */
+  --color-text-secondary: #3C3C43;   /* iOS secondary label */
+  --color-text-muted:     #6C6C70;   /* iOS tertiary label */
+  --color-text-disabled:  #AEAEB2;   /* iOS quaternary label */
 
   /* ── Accent ─────────────────────────────── */
   --color-accent:        #2563EB;
