@@ -397,15 +397,12 @@ function VerdictCard({
             {state === 'early' && (
               <div className="min-w-0">
                 <p className="text-[10px] text-dim mb-0.5">提早退休</p>
-                <p className="text-sm tabular-nums leading-snug whitespace-nowrap overflow-hidden">
-                  <span className="text-main">{earlyYears}年</span>
-                  <span className="text-faint mx-1">→</span>
-                  <span className="text-amber-600 font-semibold">
-                    {whatIfEarlyYears !== null ? `${whatIfEarlyYears}年` : '—'}
-                  </span>
+                <p className="text-[11px] text-dim tabular-nums">{earlyYears}年</p>
+                <p className="text-sm font-semibold text-amber-600 tabular-nums leading-snug">
+                  → {whatIfEarlyYears !== null ? `${whatIfEarlyYears}年` : '—'}
                 </p>
                 {earlyDeltaInfo && (
-                  <p className={`text-[10px] tabular-nums mt-1 ${earlyDeltaInfo.color}`}>
+                  <p className={`text-[10px] tabular-nums mt-0.5 ${earlyDeltaInfo.color}`}>
                     {earlyDeltaInfo.symbol} {earlyDeltaInfo.text}
                   </p>
                 )}
@@ -415,15 +412,12 @@ function VerdictCard({
             {state === 'behind' && (
               <div className="min-w-0">
                 <p className="text-[10px] text-dim mb-0.5">預計延後</p>
-                <p className="text-sm tabular-nums leading-snug whitespace-nowrap overflow-hidden">
-                  <span className="text-main">{behindYears}年</span>
-                  <span className="text-faint mx-1">→</span>
-                  <span className="text-amber-600 font-semibold">
-                    {whatIfBehindYears !== null ? `${whatIfBehindYears}年` : '—'}
-                  </span>
+                <p className="text-[11px] text-dim tabular-nums">{behindYears}年</p>
+                <p className="text-sm font-semibold text-amber-600 tabular-nums leading-snug">
+                  → {whatIfBehindYears !== null ? `${whatIfBehindYears}年` : '—'}
                 </p>
                 {behindDeltaInfo && (
-                  <p className={`text-[10px] tabular-nums mt-1 ${behindDeltaInfo.color}`}>
+                  <p className={`text-[10px] tabular-nums mt-0.5 ${behindDeltaInfo.color}`}>
                     {behindDeltaInfo.symbol} {behindDeltaInfo.text}
                   </p>
                 )}
@@ -432,15 +426,12 @@ function VerdictCard({
             {/* 達成率 delta（所有狀態） */}
             <div className="min-w-0">
               <p className="text-[10px] text-dim mb-0.5">達成率</p>
-              <p className="text-sm tabular-nums leading-snug whitespace-nowrap overflow-hidden">
-                <span className="text-main">{clampedActualRate.toFixed(0)}%</span>
-                <span className="text-faint mx-1.5">→</span>
-                <span className="text-amber-600 font-semibold">
-                  {clampedWhatIfRate >= 999 ? '999%+' : `${clampedWhatIfRate.toFixed(0)}%`}
-                </span>
+              <p className="text-[11px] text-dim tabular-nums">{clampedActualRate.toFixed(0)}%</p>
+              <p className="text-sm font-semibold text-amber-600 tabular-nums leading-snug">
+                → {clampedWhatIfRate >= 999 ? '999%+' : `${clampedWhatIfRate.toFixed(0)}%`}
               </p>
               {rateDeltaInfo && (
-                <p className={`text-[10px] tabular-nums mt-1 ${rateDeltaInfo.color}`}>
+                <p className={`text-[10px] tabular-nums mt-0.5 ${rateDeltaInfo.color}`}>
                   {rateDeltaInfo.symbol} {rateDeltaInfo.text}
                 </p>
               )}
@@ -448,13 +439,12 @@ function VerdictCard({
             {/* 退休時預估資產 delta（所有狀態） */}
             <div className="min-w-0">
               <p className="text-[10px] text-dim mb-0.5">退休時預估資產</p>
-              <p className="text-sm tabular-nums leading-snug whitespace-nowrap overflow-hidden">
-                <span className="text-main">{fmtTWD(assetsAtRetirement, true)}</span>
-                <span className="text-faint mx-1.5">→</span>
-                <span className="text-amber-600 font-semibold">{fmtTWD(whatIfAssets, true)}</span>
+              <p className="text-[11px] text-dim tabular-nums">{fmtTWD(assetsAtRetirement, true)}</p>
+              <p className="text-sm font-semibold text-amber-600 tabular-nums leading-snug">
+                → {fmtTWD(whatIfAssets, true)}
               </p>
               {assetsDeltaInfo && (
-                <p className={`text-[10px] tabular-nums mt-1 ${assetsDeltaInfo.color}`}>
+                <p className={`text-[10px] tabular-nums mt-0.5 ${assetsDeltaInfo.color}`}>
                   {assetsDeltaInfo.symbol} {assetsDeltaInfo.text}
                 </p>
               )}
@@ -554,14 +544,23 @@ function VerdictCard({
             />
             {isTestMode && !testOpen && <span className="text-amber-500">●</span>}
           </button>
-          {/* 右：跳轉建議 / 目標計算 */}
-          <button
-            onClick={() => navigate(ctaTo[state])}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-blue-600 text-xs font-semibold hover:border-blue-300 transition-colors"
-          >
-            <span>{ctaText[state]}</span>
-            <ArrowRight size={11} />
-          </button>
+          {/* 右：isTestMode → 清除試算；否則 → 跳轉建議 */}
+          {isTestMode ? (
+            <button
+              onClick={() => { resetTest(); setTestOpen(false) }}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-amber-300 text-amber-600 text-xs font-semibold hover:border-amber-400 hover:bg-amber-50 transition-colors"
+            >
+              <span>✕ 清除試算</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate(ctaTo[state])}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-blue-600 text-xs font-semibold hover:border-blue-300 transition-colors"
+            >
+              <span>{ctaText[state]}</span>
+              <ArrowRight size={11} />
+            </button>
+          )}
         </div>
 
         {/* 試算展開面板（由上方左側按鈕切換） */}

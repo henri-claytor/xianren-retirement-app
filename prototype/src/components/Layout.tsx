@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Home, Target, TrendingUp, ChevronRight,
+  Home, Target, TrendingUp, ChevronRight, ChevronDown,
   PieChart, ShieldAlert, BarChart3, History,
   Wallet, Bell, RefreshCw, Settings, Plus,
   type LucideIcon,
@@ -10,6 +11,7 @@ import {
 type SubNavItem =
   | { type: 'item';   to: string; label: string; icon: LucideIcon }
   | { type: 'header'; label: string }
+  | { type: 'group';  label: string; items: Array<{ to: string; label: string; icon: LucideIcon }> }
 
 // ── Tab interface ─────────────────────────────────────────────
 interface Tab {
@@ -36,15 +38,17 @@ const TABS: Tab[] = [
     defaultPath: '/a1',
     paths: ['/a1', '/a2', '/a3', '/b1', '/b2', '/b3', '/b4'],
     subNav: [
-      { type: 'header', label: '退休前分析' },
-      { type: 'item', to: '/a1', label: '目標計算',  icon: Target },
-      { type: 'item', to: '/a2', label: '壓力測試',  icon: ShieldAlert },
-      { type: 'item', to: '/a3', label: '資產配置',  icon: BarChart3 },
-      { type: 'header', label: '退休後規劃' },
-      { type: 'item', to: '/b1', label: '提領試算',  icon: Wallet },
-      { type: 'item', to: '/b2', label: '現金流',    icon: TrendingUp },
-      { type: 'item', to: '/b3', label: '警戒水位',  icon: Bell },
-      { type: 'item', to: '/b4', label: '再平衡',    icon: RefreshCw },
+      { type: 'group', label: '退休前分析', items: [
+        { to: '/a1', label: '目標計算', icon: Target },
+        { to: '/a2', label: '壓力測試', icon: ShieldAlert },
+        { to: '/a3', label: '資產配置', icon: BarChart3 },
+      ]},
+      { type: 'group', label: '退休後規劃', items: [
+        { to: '/b1', label: '提領試算', icon: Wallet },
+        { to: '/b2', label: '現金流',   icon: TrendingUp },
+        { to: '/b3', label: '警戒水位', icon: Bell },
+        { to: '/b4', label: '再平衡',   icon: RefreshCw },
+      ]},
     ],
   },
   {
@@ -54,8 +58,8 @@ const TABS: Tab[] = [
     defaultPath: '/a4',
     paths: ['/a4', '/s2'],
     subNav: [
-      { type: 'item', to: '/a4', label: '月度追蹤',  icon: History },
-      { type: 'item', to: '/s2', label: '資產總覽',  icon: PieChart },
+      { type: 'item', to: '/a4', label: '月度追蹤', icon: History },
+      { type: 'item', to: '/s2', label: '資產總覽', icon: PieChart },
     ],
   },
   {
@@ -70,10 +74,30 @@ const TABS: Tab[] = [
 export default function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
 
   const activeTab = TABS.find(tab =>
     tab.paths.some(p => location.pathname === p)
   ) ?? TABS[0]
+
+  // Auto-expand the group containing the current route
+  useEffect(() => {
+    if (!activeTab.subNav) return
+    for (const item of activeTab.subNav) {
+      if (item.type === 'group' && item.items.some(i => i.to === location.pathname)) {
+        setOpenGroups(prev => new Set([...prev, item.label]))
+        break
+      }
+    }
+  }, [location.pathname, activeTab])
+
+  function toggleGroup(label: string) {
+    setOpenGroups(prev => {
+      const next = new Set(prev)
+      next.has(label) ? next.delete(label) : next.add(label)
+      return next
+    })
+  }
 
   return (
     <div className="min-h-screen bg-app flex flex-col">
@@ -89,22 +113,65 @@ export default function Layout() {
           <span className="text-[10px] text-faint font-mono">Prototype v1</span>
         </div>
 
-        {/* Sub-navigation tabs */}
+        {/* Sub-navigation */}
         {activeTab.subNav && (
-          <div className="flex overflow-x-auto scrollbar-none px-2 gap-0 border-b border-base">
+          <div className="border-b border-base">
             {activeTab.subNav.map((item, idx) => {
+              // ── Group (accordion) ──────────────────────────
+              if (item.type === 'group') {
+                const isOpen = openGroups.has(item.label)
+                const hasActive = item.items.some(i => i.to === location.pathname)
+                return (
+                  <div key={item.label}>
+                    <button
+                      onClick={() => toggleGroup(item.label)}
+                      className="w-full flex items-center justify-between px-4 py-2 transition-colors hover:bg-elevated"
+                    >
+                      <span className={`text-xs font-semibold ${hasActive ? 'text-blue-600' : 'text-dim'}`}>
+                        {item.label}
+                      </span>
+                      <ChevronDown
+                        size={13}
+                        className={`transition-transform duration-200 ${hasActive ? 'text-blue-600' : 'text-faint'} ${isOpen ? 'rotate-0' : '-rotate-90'}`}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div className="flex overflow-x-auto scrollbar-none px-2 pb-1 gap-0">
+                        {item.items.map(sub => {
+                          const isActive = location.pathname === sub.to
+                          return (
+                            <NavLink
+                              key={sub.to}
+                              to={sub.to}
+                              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 font-medium transition-all border-b-[3px] ${
+                                isActive
+                                  ? 'border-blue-500 text-blue-600'
+                                  : 'border-transparent text-dim hover:text-main'
+                              }`}
+                              style={{ fontSize: 'var(--font-size-body)' }}
+                            >
+                              <sub.icon size={13} />
+                              {sub.label}
+                            </NavLink>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+              // ── Header (legacy, unused) ────────────────────
               if (item.type === 'header') {
                 return (
                   <span
                     key={`header-${idx}`}
-                    className={`shrink-0 py-2.5 text-[9px] text-faint font-semibold uppercase tracking-wider select-none pointer-events-none ${
-                      idx > 0 ? 'border-l border-gray-300 ml-3 pl-3 pr-1' : 'px-2'
-                    }`}
+                    className="shrink-0 px-4 py-2 text-[9px] text-faint font-semibold uppercase tracking-wider select-none pointer-events-none block"
                   >
                     {item.label}
                   </span>
                 )
               }
+              // ── Flat item ──────────────────────────────────
               const isActive = location.pathname === item.to
               return (
                 <NavLink
