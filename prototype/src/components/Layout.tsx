@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Home, Target, TrendingUp, ChevronRight, ChevronDown,
+  Home, Target, TrendingUp, ChevronRight,
   PieChart, ShieldAlert, BarChart3, History,
   Wallet, Bell, RefreshCw, Settings, Plus,
   type LucideIcon,
@@ -74,30 +74,34 @@ const TABS: Tab[] = [
 export default function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
 
   const activeTab = TABS.find(tab =>
     tab.paths.some(p => location.pathname === p)
   ) ?? TABS[0]
 
-  // Auto-expand the group containing the current route
+  // selectedGroup: label of the currently selected group tab (for two-row sub-nav)
+  const firstGroup = activeTab.subNav?.find(i => i.type === 'group')
+  const [selectedGroup, setSelectedGroup] = useState<string>(
+    firstGroup?.type === 'group' ? firstGroup.label : ''
+  )
+
+  // Auto-select the group containing the current route
   useEffect(() => {
     if (!activeTab.subNav) return
     for (const item of activeTab.subNav) {
       if (item.type === 'group' && item.items.some(i => i.to === location.pathname)) {
-        setOpenGroups(prev => new Set([...prev, item.label]))
-        break
+        setSelectedGroup(item.label)
+        return
       }
     }
+    // If switching to a tab with groups and no active route found, select first group
+    const first = activeTab.subNav.find(i => i.type === 'group')
+    if (first?.type === 'group') setSelectedGroup(first.label)
   }, [location.pathname, activeTab])
 
-  function toggleGroup(label: string) {
-    setOpenGroups(prev => {
-      const next = new Set(prev)
-      next.has(label) ? next.delete(label) : next.add(label)
-      return next
-    })
-  }
+  // Gather all groups in the active tab's subNav
+  const groups = activeTab.subNav?.filter(i => i.type === 'group') ?? []
+  const hasGroups = groups.length > 0
 
   return (
     <div className="min-h-screen bg-app flex flex-col">
@@ -115,81 +119,90 @@ export default function Layout() {
 
         {/* Sub-navigation */}
         {activeTab.subNav && (
-          <div className="border-b border-base">
-            {activeTab.subNav.map((item, idx) => {
-              // ── Group (accordion) ──────────────────────────
-              if (item.type === 'group') {
-                const isOpen = openGroups.has(item.label)
-                const hasActive = item.items.some(i => i.to === location.pathname)
-                return (
-                  <div key={item.label}>
+          hasGroups ? (
+            // ── Two-row grouped sub-nav ──────────────────────
+            <div className="border-b border-base">
+              {/* Row 1: group segment tabs */}
+              <div className="flex border-b border-base">
+                {groups.map(g => {
+                  if (g.type !== 'group') return null
+                  const isSelected = selectedGroup === g.label
+                  return (
                     <button
-                      onClick={() => toggleGroup(item.label)}
-                      className="w-full flex items-center justify-between px-4 py-2 transition-colors hover:bg-elevated"
+                      key={g.label}
+                      onClick={() => setSelectedGroup(g.label)}
+                      className={`flex-1 py-2 text-xs font-semibold text-center border-b-[2px] -mb-px transition-colors ${
+                        isSelected
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-dim hover:text-main'
+                      }`}
                     >
-                      <span className={`text-xs font-semibold ${hasActive ? 'text-blue-600' : 'text-dim'}`}>
-                        {item.label}
-                      </span>
-                      <ChevronDown
-                        size={13}
-                        className={`transition-transform duration-200 ${hasActive ? 'text-blue-600' : 'text-faint'} ${isOpen ? 'rotate-0' : '-rotate-90'}`}
-                      />
+                      {g.label}
                     </button>
-                    {isOpen && (
-                      <div className="flex overflow-x-auto scrollbar-none px-2 pb-1 gap-0">
-                        {item.items.map(sub => {
-                          const isActive = location.pathname === sub.to
-                          return (
-                            <NavLink
-                              key={sub.to}
-                              to={sub.to}
-                              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 font-medium transition-all border-b-[3px] ${
-                                isActive
-                                  ? 'border-blue-500 text-blue-600'
-                                  : 'border-transparent text-dim hover:text-main'
-                              }`}
-                              style={{ fontSize: 'var(--font-size-body)' }}
-                            >
-                              <sub.icon size={13} />
-                              {sub.label}
-                            </NavLink>
-                          )
-                        })}
-                      </div>
-                    )}
+                  )
+                })}
+              </div>
+              {/* Row 2: items of selected group */}
+              {groups.map(g => {
+                if (g.type !== 'group' || g.label !== selectedGroup) return null
+                return (
+                  <div key={g.label} className="flex overflow-x-auto scrollbar-none px-2 gap-0">
+                    {g.items.map(sub => {
+                      const isActive = location.pathname === sub.to
+                      return (
+                        <NavLink
+                          key={sub.to}
+                          to={sub.to}
+                          className={`shrink-0 flex items-center gap-1.5 px-3 py-2.5 font-medium transition-all border-b-[3px] -mb-px ${
+                            isActive
+                              ? 'border-blue-500 text-blue-600'
+                              : 'border-transparent text-dim hover:text-main'
+                          }`}
+                          style={{ fontSize: 'var(--font-size-body)' }}
+                        >
+                          <sub.icon size={13} />
+                          {sub.label}
+                        </NavLink>
+                      )
+                    })}
                   </div>
                 )
-              }
-              // ── Header (legacy, unused) ────────────────────
-              if (item.type === 'header') {
+              })}
+            </div>
+          ) : (
+            // ── Flat single-row sub-nav (資產追蹤 etc.) ──────
+            <div className="flex overflow-x-auto scrollbar-none px-2 gap-0 border-b border-base">
+              {activeTab.subNav.map((item, idx) => {
+                if (item.type === 'header') {
+                  return (
+                    <span
+                      key={`header-${idx}`}
+                      className="shrink-0 px-4 py-2 text-[9px] text-faint font-semibold uppercase tracking-wider select-none pointer-events-none"
+                    >
+                      {item.label}
+                    </span>
+                  )
+                }
+                if (item.type === 'group') return null
+                const isActive = location.pathname === item.to
                 return (
-                  <span
-                    key={`header-${idx}`}
-                    className="shrink-0 px-4 py-2 text-[9px] text-faint font-semibold uppercase tracking-wider select-none pointer-events-none block"
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={`shrink-0 flex items-center gap-1.5 px-3 py-2.5 font-medium transition-all border-b-[3px] -mb-px ${
+                      isActive
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-dim hover:text-main'
+                    }`}
+                    style={{ fontSize: 'var(--font-size-body)' }}
                   >
+                    <item.icon size={13} />
                     {item.label}
-                  </span>
+                  </NavLink>
                 )
-              }
-              // ── Flat item ──────────────────────────────────
-              const isActive = location.pathname === item.to
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={`shrink-0 flex items-center gap-1.5 px-3 py-2.5 font-medium transition-all border-b-[3px] -mb-px ${
-                    isActive
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-dim hover:text-main'
-                  }`}
-                  style={{ fontSize: 'var(--font-size-body)' }}
-                >
-                  <item.icon size={13} />
-                  {item.label}
-                </NavLink>
-              )
-            })}
-          </div>
+              })}
+            </div>
+          )
         )}
       </div>
 
