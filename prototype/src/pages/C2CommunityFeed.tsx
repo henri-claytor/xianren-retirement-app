@@ -65,7 +65,7 @@ function PostCard({ post }: { post: Post }) {
         </div>
         <div>
           <p className="text-main font-semibold" style={{ fontSize: '12px' }}>{post.author}</p>
-          <p className="text-faint" style={{ fontSize: '10px' }}>{post.time}</p>
+          <p className="text-faint text-caption">{post.time}</p>
         </div>
       </div>
 
@@ -85,10 +85,10 @@ function PostCard({ post }: { post: Post }) {
 
       {/* 互動計數 */}
       <div className="flex items-center gap-4 pt-2 border-t border-base">
-        <span className="flex items-center gap-1 text-faint" style={{ fontSize: '11px' }}>
+        <span className="flex items-center gap-1 text-faint text-label">
           <ThumbsUp size={12} /> {post.likes}
         </span>
-        <span className="flex items-center gap-1 text-faint" style={{ fontSize: '11px' }}>
+        <span className="flex items-center gap-1 text-faint text-label">
           <MessageCircle size={12} /> {post.comments}
         </span>
       </div>
@@ -105,7 +105,7 @@ export default function C2CommunityFeed() {
         {/* 社團公告 */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
           <p className="font-semibold text-blue-700 mb-1" style={{ fontSize: '12px' }}>📢 社團公告</p>
-          <p className="text-blue-600/80" style={{ fontSize: '11px' }}>
+          <p className="text-blue-600/80 text-label">
             歡迎分享退休規劃心得、提問財務問題、交流生活經驗。本社團為模擬展示，內容僅供參考。
           </p>
         </div>
@@ -114,7 +114,7 @@ export default function C2CommunityFeed() {
           <PostCard key={post.id} post={post} />
         ))}
 
-        <div className="text-center text-faint py-4" style={{ fontSize: '11px' }}>
+        <div className="text-center text-faint py-4 text-label">
           — 以上為示範貼文 —
         </div>
       </div>

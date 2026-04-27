@@ -4,6 +4,7 @@ import { Target } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { PageHeader, Card, StatCard, fmtTWD } from '../components/Layout'
 import { calcAnnuityFutureValue } from '../utils/retirementStatus'
+import { useMarkVisited } from '../hooks/useMarkVisited'
 
 // PMT：每月需儲蓄多少才能在退休時達到目標
 // PMT = FV × r / ((1+r)^n - 1)
@@ -41,7 +42,7 @@ function CashflowChart({
         <p className="text-dim text-sm">
           💡 填寫財務現況後，這裡會顯示你的自由現金流分析
         </p>
-        <a href="/s1" className="text-blue-600 text-xs">前往填寫財務現況 →</a>
+        <a href="/s1" className="text-blue-600 text-label">前往填寫財務現況 →</a>
       </Card>
     )
   }
@@ -78,7 +79,7 @@ function CashflowChart({
           <YAxis
             type="category"
             dataKey="name"
-            tick={{ fill: '#A0A0A0', fontSize: 11 }}
+            tick={{ fill: '#6C6C70', fontSize: 11 }}
             width={30}
             axisLine={false}
             tickLine={false}
@@ -88,7 +89,7 @@ function CashflowChart({
               const num = Number(value)
               return num === 0 ? ['', ''] : [fmtTWD(num, true), '']
             }}
-            contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+            contentStyle={{ background: '#FFFFFF', border: '1px solid #C6C6C8', color: '#1C1C1E' }}
             itemStyle={{ color: '#E5E5E5' }}
           />
           {/* 收入側 */}
@@ -105,17 +106,17 @@ function CashflowChart({
       {/* Task 2.4: 自由現金流 stat 列 */}
       <div className="mt-3 pt-3 border-t border-base flex items-center justify-between">
         <div>
-          <p className="text-dim text-[10px] mb-0.5">自由現金流</p>
-          <p className="font-bold text-sm" style={{ color: surplusColor }}>
+          <p className="text-dim text-label mb-0.5">自由現金流</p>
+          <p className="font-bold text-lg" style={{ color: surplusColor }}>
             {fmtTWD(monthlySurplus, true)}/月
           </p>
         </div>
         <div className="text-right">
-          <p className="text-dim text-[10px] mb-0.5">儲蓄率</p>
+          <p className="text-dim text-label mb-0.5">儲蓄率</p>
           {isCashflowNeg ? (
-            <p className="font-bold text-sm text-red-600">收支倒掛</p>
+            <p className="font-bold text-lg text-red-600">收支倒掛</p>
           ) : (
-            <p className="font-bold text-sm text-main">
+            <p className="font-bold text-lg text-main">
               {isNaN(savingsRate) ? '—' : `${savingsRate.toFixed(0)}%`}
             </p>
           )}
@@ -125,7 +126,7 @@ function CashflowChart({
       {/* Task 2.5: 需儲蓄對比 */}
       {requiredSavings > 0 && (
         <div className="mt-2 rounded-xl bg-elevated px-3 py-2">
-          <p className="text-dim text-xs leading-relaxed">
+          <p className="text-dim leading-relaxed">
             需儲蓄{' '}
             <span className="text-blue-600 font-semibold">{fmtTWD(requiredSavings, true)}</span>
             {cashflowPct !== null && (
@@ -150,6 +151,8 @@ function CashflowChart({
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function A1RetirementGoal() {
+  useMarkVisited('a1')
+
   const { data } = useStore()
   const s = calcSummary(data)
 
@@ -223,14 +226,17 @@ export default function A1RetirementGoal() {
         {/* 1. 現況摘要條 */}
         <div className="flex gap-2">
           <div className="flex-1 bg-surface rounded-2xl border border-base p-3">
-            <p className="text-dim text-[10px] mb-0.5">可投資資產</p>
-            <p className="font-bold text-main text-sm">
+            <p className="text-dim text-label mb-0.5">可投資資產<span className="ml-1 text-caption text-dim">(不含房屋)</span></p>
+            <p className="font-bold text-main text-lg">
               {s.investableAssets > 0 ? fmtTWD(s.investableAssets, true) : '—'}
             </p>
+            {(data.realEstateSelfUse + data.realEstateRental) > 0 && (
+              <p className="text-caption text-dim mt-0.5">房屋 {fmtTWD(data.realEstateSelfUse + data.realEstateRental, true)} 不納入成長模擬</p>
+            )}
           </div>
           <div className="flex-1 bg-surface rounded-2xl border border-base p-3">
-            <p className="text-dim text-[10px] mb-0.5">月結餘</p>
-            <p className={`font-bold text-sm ${
+            <p className="text-dim text-label mb-0.5">月結餘</p>
+            <p className={`font-bold text-lg ${
               s.monthlyIncome === 0 ? 'text-dim'
               : s.monthlySurplus > 0 ? 'text-green-600'
               : s.monthlySurplus < 0 ? 'text-red-600'
@@ -248,7 +254,7 @@ export default function A1RetirementGoal() {
           {/* 退休年齡 */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>退休年齡</label>
+              <label className="text-dim text-label">退休年齡</label>
               <span className="font-bold text-main text-sm">{retireAge} 歲</span>
             </div>
             <input
@@ -257,7 +263,7 @@ export default function A1RetirementGoal() {
               onChange={e => setRetireAge(Number(e.target.value))}
               className="w-full accent-blue-500"
             />
-            <div className="flex justify-between text-faint mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
+            <div className="flex justify-between text-faint mt-0.5 text-label">
               <span>50 歲</span><span>75 歲</span>
             </div>
           </div>
@@ -265,7 +271,7 @@ export default function A1RetirementGoal() {
           {/* 預期報酬率 */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>預期年報酬率</label>
+              <label className="text-dim text-label">預期年報酬率</label>
               <span className="font-bold text-main text-sm">{returnRate}%</span>
             </div>
             <input
@@ -274,7 +280,7 @@ export default function A1RetirementGoal() {
               onChange={e => setReturnRate(Number(e.target.value))}
               className="w-full accent-blue-500"
             />
-            <div className="flex justify-between text-faint mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
+            <div className="flex justify-between text-faint mt-0.5 text-label">
               <span>2%</span><span>12%</span>
             </div>
           </div>
@@ -282,7 +288,7 @@ export default function A1RetirementGoal() {
           {/* 退休後月支出 */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>退休後每月支出</label>
+              <label className="text-dim text-label">退休後每月支出</label>
               <span className="font-bold text-main text-sm">{fmtTWD(monthlyRetireExpense, true)}</span>
             </div>
             <input
@@ -291,7 +297,7 @@ export default function A1RetirementGoal() {
               onChange={e => setMonthlyRetireExpense(Number(e.target.value))}
               className="w-full accent-blue-500"
             />
-            <p className="text-faint mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
+            <p className="text-faint mt-0.5 text-label">
               預設為現在支出的 80%
               {s.monthlyExpense > 0 && `（現在 ${fmtTWD(s.monthlyExpense, true)} × 80% = ${fmtTWD(Math.round(s.monthlyExpense * 0.8), true)}）`}
             </p>
@@ -302,17 +308,17 @@ export default function A1RetirementGoal() {
         <div className="space-y-2">
           {/* 主卡：每月需儲蓄（最大最顯眼）*/}
           <div className="bg-blue-50 rounded-2xl border border-blue-200 p-4">
-            <p className="text-dim text-xs mb-1">每月需儲蓄</p>
-            <p className="text-3xl font-bold text-blue-600 leading-none">
+            <p className="text-dim text-label mb-1">每月需儲蓄</p>
+            <p className="font-bold text-blue-600 leading-none" style={{ fontSize: main.required > 0 ? 'var(--font-size-display)' : 'var(--font-size-h1)' }}>
               {main.required > 0 ? fmtTWD(main.required, true) : '不需額外儲蓄 ✓'}
             </p>
             {main.required > 0 && s.monthlySurplus > 0 && surplusRatio !== null && (
-              <p className="text-blue-200/70 text-xs mt-2">
+              <p className="text-blue-700/70 text-label mt-2">
                 佔月結餘 {surplusRatio.toFixed(0)}%（月結餘 {fmtTWD(s.monthlySurplus, true)}）
               </p>
             )}
             {main.required > 0 && s.monthlyIncome === 0 && (
-              <p className="text-faint text-xs mt-2">填寫財務現況後可顯示佔月結餘比例</p>
+              <p className="text-faint text-label mt-2">填寫財務現況後可顯示佔月結餘比例</p>
             )}
           </div>
 
@@ -360,14 +366,14 @@ export default function A1RetirementGoal() {
                     <span className={`text-sm font-bold ${isCurrent ? 'text-blue-600' : 'text-dim'}`}>
                       {sc.age} 歲
                     </span>
-                    <span className="text-faint text-xs ml-2">距今 {sc.age - data.currentAge} 年</span>
+                    <span className="text-faint text-label ml-2">距今 {sc.age - data.currentAge} 年</span>
                   </div>
                   <div className="text-right">
                     <p className={`text-sm font-bold ${isCurrent ? 'text-main' : 'text-dim'}`}>
                       {sc.required > 0 ? `${fmtTWD(sc.required, true)}/月` : '不需儲蓄 ✓'}
                     </p>
                     {sc.pct !== null && (
-                      <p className={`text-[10px] ${
+                      <p className={`text-caption ${
                         sc.pct <= 50 ? 'text-green-600' :
                         sc.pct <= 80 ? 'text-amber-600' : 'text-red-600'
                       }`}>
@@ -402,20 +408,20 @@ export default function A1RetirementGoal() {
             <h3 className="text-sm font-semibold text-main mb-1">
               資產成長軌跡（報酬率 {returnRate}%）
             </h3>
-            <p className="text-dim mb-3" style={{ fontSize: 'var(--font-size-label)' }}>
+            <p className="text-dim mb-3 text-label">
               達成率 {Math.min(achievementRate, 999).toFixed(0)}%
               {main.gap > 0 && ` · 缺口 ${fmtTWD(main.gap, true)}`}
             </p>
             <ResponsiveContainer width="100%" height={240}>
               <ComposedChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-                <XAxis dataKey="year" tick={{ fill: '#A0A0A0', fontSize: 11 }} />
-                <YAxis tickFormatter={v => `${v}萬`} tick={{ fill: '#A0A0A0', fontSize: 11 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E5EA" />
+                <XAxis dataKey="year" tick={{ fill: '#6C6C70', fontSize: 11 }} />
+                <YAxis tickFormatter={v => `${v}萬`} tick={{ fill: '#6C6C70', fontSize: 11 }} />
                 <Tooltip
                   formatter={(v: unknown) => `${Number(v).toLocaleString()} 萬`}
-                  contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+                  contentStyle={{ background: '#FFFFFF', border: '1px solid #C6C6C8', color: '#1C1C1E' }}
                 />
-                <Legend wrapperStyle={{ color: '#D4D4D4', fontSize: 12 }} />
+                <Legend wrapperStyle={{ color: '#3C3C43', fontSize: 12 }} />
                 <Bar dataKey="資產軌跡" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                 <Line
                   dataKey="目標退休金"
@@ -432,7 +438,7 @@ export default function A1RetirementGoal() {
         {/* 計算邏輯說明 */}
         <Card className="p-3">
           <h3 className="text-sm font-semibold text-main mb-2">計算邏輯</h3>
-          <div className="text-dim space-y-1.5" style={{ fontSize: 'var(--font-size-label)' }}>
+          <div className="text-dim space-y-1.5 text-label">
             <p>• <strong className="text-main">目標退休金</strong> = 通膨調整後月支出 × 12 ÷ 4%（4% 提領法則）</p>
             <p>• <strong className="text-main">被動收入抵扣</strong>：勞保年金 + 勞退月退 {fmtTWD(monthlyPassiveIncome, true)}/月，減少需自備的資金</p>
             <p>• <strong className="text-main">每月需儲蓄</strong>：年金終值公式（PMT = FV × r / ((1+r)^n - 1)），考慮複利效果</p>

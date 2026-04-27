@@ -1,17 +1,8 @@
-import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Home, Target, TrendingUp, ChevronRight,
-  PieChart, ShieldAlert, BarChart3, History,
-  Wallet, Bell, RefreshCw, Settings, Plus,
+  Home, Compass, MessageSquare, User, Plus,
   type LucideIcon,
 } from 'lucide-react'
-
-// ── SubNavItem union type ─────────────────────────────────────
-type SubNavItem =
-  | { type: 'item';   to: string; label: string; icon: LucideIcon }
-  | { type: 'header'; label: string }
-  | { type: 'group';  label: string; items: Array<{ to: string; label: string; icon: LucideIcon }> }
 
 // ── Tab interface ─────────────────────────────────────────────
 interface Tab {
@@ -19,56 +10,14 @@ interface Tab {
   label: string
   icon: LucideIcon
   defaultPath: string
-  paths: string[]
-  subNav?: SubNavItem[]
+  paths: string[]   // 此 tab 在哪些路徑下顯示為 active
 }
 
 const TABS: Tab[] = [
-  {
-    id: 'home',
-    label: '退休儀表板',
-    icon: Home,
-    defaultPath: '/',
-    paths: ['/'],
-  },
-  {
-    id: 'plan',
-    label: '退休規劃',
-    icon: Target,
-    defaultPath: '/a1',
-    paths: ['/a1', '/a2', '/a3', '/b1', '/b2', '/b3', '/b4'],
-    subNav: [
-      { type: 'group', label: '退休前分析', items: [
-        { to: '/a1', label: '目標計算', icon: Target },
-        { to: '/a2', label: '壓力測試', icon: ShieldAlert },
-        { to: '/a3', label: '資產配置', icon: BarChart3 },
-      ]},
-      { type: 'group', label: '退休後規劃', items: [
-        { to: '/b1', label: '提領試算', icon: Wallet },
-        { to: '/b2', label: '現金流',   icon: TrendingUp },
-        { to: '/b3', label: '警戒水位', icon: Bell },
-        { to: '/b4', label: '再平衡',   icon: RefreshCw },
-      ]},
-    ],
-  },
-  {
-    id: 'track',
-    label: '資產追蹤',
-    icon: History,
-    defaultPath: '/a4',
-    paths: ['/a4', '/s2'],
-    subNav: [
-      { type: 'item', to: '/a4', label: '月度追蹤', icon: History },
-      { type: 'item', to: '/s2', label: '資產總覽', icon: PieChart },
-    ],
-  },
-  {
-    id: 'settings',
-    label: '設定',
-    icon: Settings,
-    defaultPath: '/s1',
-    paths: ['/s1'],
-  },
+  { id: 'home',     label: '儀表板', icon: Home,         defaultPath: '/',          paths: ['/', '/diagnosis'] },
+  { id: 'planning', label: '規劃',   icon: Compass,      defaultPath: '/planning',  paths: ['/planning', '/s1', '/s2', '/s3', '/a1', '/a2', '/a3', '/b1', '/b2', '/b3', '/b4'] },
+  { id: 'community',label: '社群',   icon: MessageSquare,defaultPath: '/c1',        paths: ['/c1', '/c2'] },
+  { id: 'me',       label: '我的',   icon: User,         defaultPath: '/me',        paths: ['/me', '/me/all-tools', '/me/snapshots', '/a4'] },
 ]
 
 export default function Layout() {
@@ -78,30 +27,6 @@ export default function Layout() {
   const activeTab = TABS.find(tab =>
     tab.paths.some(p => location.pathname === p)
   ) ?? TABS[0]
-
-  // selectedGroup: label of the currently selected group tab (for two-row sub-nav)
-  const firstGroup = activeTab.subNav?.find(i => i.type === 'group')
-  const [selectedGroup, setSelectedGroup] = useState<string>(
-    firstGroup?.type === 'group' ? firstGroup.label : ''
-  )
-
-  // Auto-select the group containing the current route
-  useEffect(() => {
-    if (!activeTab.subNav) return
-    for (const item of activeTab.subNav) {
-      if (item.type === 'group' && item.items.some(i => i.to === location.pathname)) {
-        setSelectedGroup(item.label)
-        return
-      }
-    }
-    // If switching to a tab with groups and no active route found, select first group
-    const first = activeTab.subNav.find(i => i.type === 'group')
-    if (first?.type === 'group') setSelectedGroup(first.label)
-  }, [location.pathname, activeTab])
-
-  // Gather all groups in the active tab's subNav
-  const groups = activeTab.subNav?.filter(i => i.type === 'group') ?? []
-  const hasGroups = groups.length > 0
 
   return (
     <div className="min-h-screen bg-app flex flex-col">
@@ -116,94 +41,6 @@ export default function Layout() {
           </div>
           <span className="text-[10px] text-faint font-mono">Prototype v1</span>
         </div>
-
-        {/* Sub-navigation */}
-        {activeTab.subNav && (
-          hasGroups ? (
-            // ── Two-row grouped sub-nav ──────────────────────
-            <div className="border-b border-base">
-              {/* Row 1: group segment tabs */}
-              <div className="flex border-b border-base">
-                {groups.map(g => {
-                  if (g.type !== 'group') return null
-                  const isSelected = selectedGroup === g.label
-                  return (
-                    <button
-                      key={g.label}
-                      onClick={() => setSelectedGroup(g.label)}
-                      className={`flex-1 py-2 text-xs font-semibold text-center border-b-[2px] -mb-px transition-colors ${
-                        isSelected
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-dim hover:text-main'
-                      }`}
-                    >
-                      {g.label}
-                    </button>
-                  )
-                })}
-              </div>
-              {/* Row 2: items of selected group */}
-              {groups.map(g => {
-                if (g.type !== 'group' || g.label !== selectedGroup) return null
-                return (
-                  <div key={g.label} className="flex overflow-x-auto scrollbar-none px-2 gap-0">
-                    {g.items.map(sub => {
-                      const isActive = location.pathname === sub.to
-                      return (
-                        <NavLink
-                          key={sub.to}
-                          to={sub.to}
-                          className={`shrink-0 flex items-center gap-1.5 px-3 py-2.5 font-medium transition-all border-b-[3px] -mb-px ${
-                            isActive
-                              ? 'border-blue-500 text-blue-600'
-                              : 'border-transparent text-dim hover:text-main'
-                          }`}
-                          style={{ fontSize: 'var(--font-size-body)' }}
-                        >
-                          <sub.icon size={13} />
-                          {sub.label}
-                        </NavLink>
-                      )
-                    })}
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            // ── Flat single-row sub-nav (資產追蹤 etc.) ──────
-            <div className="flex overflow-x-auto scrollbar-none px-2 gap-0 border-b border-base">
-              {activeTab.subNav.map((item, idx) => {
-                if (item.type === 'header') {
-                  return (
-                    <span
-                      key={`header-${idx}`}
-                      className="shrink-0 px-4 py-2 text-[9px] text-faint font-semibold uppercase tracking-wider select-none pointer-events-none"
-                    >
-                      {item.label}
-                    </span>
-                  )
-                }
-                if (item.type === 'group') return null
-                const isActive = location.pathname === item.to
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    className={`shrink-0 flex items-center gap-1.5 px-3 py-2.5 font-medium transition-all border-b-[3px] -mb-px ${
-                      isActive
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-dim hover:text-main'
-                    }`}
-                    style={{ fontSize: 'var(--font-size-body)' }}
-                  >
-                    <item.icon size={13} />
-                    {item.label}
-                  </NavLink>
-                )
-              })}
-            </div>
-          )
-        )}
       </div>
 
       {/* Main content */}
@@ -254,7 +91,7 @@ export function PageHeader({ title, subtitle, icon: Icon }: {
         )}
         <div className="flex items-baseline gap-2 min-w-0">
           <h1 className="font-bold text-main shrink-0" style={{ fontSize: '14px' }}>{title}</h1>
-          {subtitle && <p className="text-dim truncate" style={{ fontSize: 'var(--font-size-label)' }}>{subtitle}</p>}
+          {subtitle && <p className="text-dim truncate text-label">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -288,7 +125,7 @@ export function StatCard({ label, value, sub, color = 'blue' }: {
     <div className="rounded-xl px-2 py-1.5" style={{ background: c.bg }}>
       <p className="inline-block font-medium mb-0.5 px-1.5 py-0.5 rounded-md text-white" style={{ fontSize: 'var(--font-size-label)', background: c.labelBg }}>{label}</p>
       <p className="font-bold" style={{ fontSize: '14px', color: c.text }}>{value}</p>
-      {sub && <p className="mt-0.5 text-dim" style={{ fontSize: 'var(--font-size-label)' }}>{sub}</p>}
+      {sub && <p className="mt-0.5 text-dim text-label">{sub}</p>}
     </div>
   )
 }
@@ -317,7 +154,6 @@ export function SummaryStrip({ primary, items }: {
   const pc = primaryColors[primary.color ?? 'default']
   return (
     <div className="flex items-stretch gap-2 px-4 py-2">
-      {/* Primary metric */}
       <div className="shrink-0 bg-surface rounded-xl px-3 py-2 min-w-[110px] border border-base shadow-sm">
         <p className="text-[10px] text-dim mb-0.5">{primary.label}</p>
         <p className="font-bold text-[17px]" style={{ color: pc.text }}>{primary.value}</p>
@@ -327,7 +163,6 @@ export function SummaryStrip({ primary, items }: {
           </p>
         )}
       </div>
-      {/* Secondary metrics */}
       <div className="flex gap-2 overflow-x-auto scrollbar-none sm:flex-wrap sm:overflow-visible flex-1 items-stretch">
         {items.map((item, i) => (
           <div key={i} className="shrink-0 bg-elevated rounded-xl px-3 py-2 min-w-[88px] border border-base">
@@ -360,8 +195,8 @@ export function EmptyState({ icon: Icon, message, onAdd }: {
   )
 }
 
-// Unused export kept for breadcrumb reference (not rendered in new layout)
-export { ChevronRight }
+// Re-export for legacy callers (NavLink unused but kept to avoid breaking existing imports if any)
+export { NavLink }
 
 function smartDecimal(v: number): string {
   const rounded = Math.round(v * 10) / 10

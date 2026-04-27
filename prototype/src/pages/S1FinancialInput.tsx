@@ -7,25 +7,48 @@ import type { FinancialSnapshot } from '../store/types'
 import StockSearch from '../components/StockSearch'
 import type { MockStock } from '../store/mockData'
 import type { ExpenseItem, TransitionalExpense, Liability, StockHolding, ETFHolding, FundHolding } from '../store/types'
+import { useMarkVisited } from '../hooks/useMarkVisited'
 
-// ── NumInput component（focus 時顯示純數字，blur 後格式化）────────
-function NumInput({ val, onChange, prefix, suffix, min = 0 }: {
+// ── NumInput component（focus 時顯示純數字，blur 後格式化；支援小數）──
+function NumInput({ val, onChange, prefix, suffix, min = 0, decimals = 0 }: {
   val: number
   onChange: (v: number) => void
   prefix?: string
   suffix?: string
   min?: number
+  decimals?: number  // 0 = 整數，1 = 一位小數，2 = 兩位小數
 }) {
   const [isFocused, setIsFocused] = useState(false)
-  const displayVal = isFocused
-    ? (val === 0 ? '' : String(val))
-    : (val !== 0 ? val.toLocaleString() : '0')
+  const [inputStr, setInputStr] = useState('')
+
+  function formatDisplay(v: number): string {
+    if (v === 0) return '0'
+    if (decimals > 0) return parseFloat(v.toFixed(decimals)).toString()
+    return v.toLocaleString()
+  }
+
+  const displayVal = isFocused ? inputStr : formatDisplay(val)
+
+  function handleFocus() {
+    setIsFocused(true)
+    setInputStr(val === 0 ? '' : String(val))
+  }
 
   function handleChange(raw: string) {
+    setInputStr(raw)
     const cleaned = raw.replace(/,/g, '')
+    // 允許輸入中途的 "6." 或空字串，暫不觸發 onChange
+    if (cleaned === '' || cleaned === '.') return
     const n = Number(cleaned)
     if (!isNaN(n) && n >= min) onChange(n)
-    else if (cleaned === '' || cleaned === '-') onChange(0)
+  }
+
+  function handleBlur() {
+    setIsFocused(false)
+    const cleaned = inputStr.replace(/,/g, '')
+    const n = Number(cleaned)
+    onChange(!isNaN(n) && n >= min ? n : 0)
+    setInputStr('')
   }
 
   return (
@@ -33,10 +56,10 @@ function NumInput({ val, onChange, prefix, suffix, min = 0 }: {
       {prefix && <span className="absolute left-3 text-xs text-dim pointer-events-none">{prefix}</span>}
       <input
         type="text"
-        inputMode="numeric"
+        inputMode={decimals > 0 ? 'decimal' : 'numeric'}
         value={displayVal}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         onChange={e => handleChange(e.target.value)}
         className={`bg-white text-main border border-gray-300 rounded-lg py-1.5 text-xs w-full focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-faint ${prefix ? 'pl-6 pr-3' : suffix ? 'pl-3 pr-8' : 'px-3'}`}
       />
@@ -81,11 +104,16 @@ function SummaryCards({ data, s }: {
   return (
     <div className="grid grid-cols-2 gap-2 px-4 py-3">
       <div className="bg-surface rounded-xl p-3 border border-base">
-        <p className="text-[10px] text-dim mb-0.5">總資產</p>
+        <p className="text-[10px] text-dim mb-0.5">
+          總資產
+          {(data.realEstateSelfUse + data.realEstateRental) > 0 && (
+            <span className="ml-1 text-[9px] text-dim">(含房屋 {fmtTWD(data.realEstateSelfUse + data.realEstateRental, true)})</span>
+          )}
+        </p>
         <p className="font-bold text-sm text-main">{fmtTWD(s.totalAssets, true)}</p>
       </div>
       <div className="bg-surface rounded-xl p-3 border border-base">
-        <p className="text-[10px] text-dim mb-0.5">可投資資產</p>
+        <p className="text-[10px] text-dim mb-0.5">可投資資產<span className="ml-1 text-[9px] text-dim">(不含房屋)</span></p>
         <p className="font-bold text-sm text-purple-600">{fmtTWD(s.investableAssets, true)}</p>
       </div>
       <div className="bg-surface rounded-xl p-3 border border-base">
@@ -153,11 +181,12 @@ function StatusIcon({ status }: { status: SectionStatus }) {
 
 // ── SectionHeader ─────────────────────────────────────────────
 function SectionHeader({
-  icon: Icon, num, title, summary, isOpen, onToggle, accentColor, status
+  icon: Icon, num, title, hint, summary, isOpen, onToggle, accentColor, status
 }: {
   icon: React.ComponentType<{ size?: number; className?: string }>
   num: string
   title: string
+  hint?: string
   summary?: string
   isOpen: boolean
   onToggle: () => void
@@ -173,10 +202,12 @@ function SectionHeader({
         <div className="w-6 h-6 flex items-center justify-center shrink-0">
           {status ? <StatusIcon status={status} /> : <Icon size={12} className="text-blue-600" />}
         </div>
-        <span className="text-faint font-mono shrink-0" style={{ fontSize: '11px' }}>{num}</span>
-        <span className={`font-semibold flex-1 text-left transition-colors ${isOpen ? 'text-main' : 'text-dim'}`} style={{ fontSize: '13px' }}>{title}</span>
+        <span className="text-faint font-mono shrink-0 text-label">{num}</span>
+        <span className={`font-semibold flex-1 text-left transition-colors ${isOpen ? 'text-main' : 'text-dim'}`} style={{ fontSize: '13px' }}>
+          {title}{hint && <span className="font-normal text-faint ml-1 text-caption">{hint}</span>}
+        </span>
         {summary && !isOpen && (
-          <span className="font-semibold text-dim shrink-0" style={{ fontSize: '11px' }}>{summary}</span>
+          <span className="font-semibold text-dim shrink-0 text-label">{summary}</span>
         )}
         {isOpen ? <ChevronUp size={14} className="text-dim shrink-0" /> : <ChevronDown size={14} className="text-dim shrink-0" />}
       </button>
@@ -191,10 +222,12 @@ function SectionHeader({
 }
 
 export default function S1FinancialInput() {
+  useMarkVisited('s1')
+
   const { data, updateData, resetData } = useStore()
   const s = calcSummary(data)
   const [saved, setSaved] = useState(false)
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['income', 'expense']))
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set())
 
   function toggleSection(id: string) {
     setOpenSections(prev => {
@@ -283,16 +316,22 @@ export default function S1FinancialInput() {
 
   return (
     <div>
-      <PageHeader title="財務現況輸入" subtitle="建立你的財務基準，所有工具的資料來源" icon={DollarSign} />
+      <PageHeader title="我的財務" subtitle="建立你的財務基準，所有工具的資料來源" icon={DollarSign} />
 
       {/* 2×2 資產摘要卡片 */}
       <SummaryCards data={data} s={s} />
 
       <div className="px-4 py-2 space-y-3 pb-24">
 
+        {/* 群組：每月收支 */}
+        <div className="flex items-center gap-2 pt-1 pb-0.5">
+          <span className="text-xs font-bold text-main shrink-0">每月收支</span>
+          <div className="flex-1 h-px bg-[var(--color-border)]" />
+        </div>
+
         {/* ① 月收入 */}
         <div>
-          <SectionHeader icon={TrendingUp} num="①" title="月收入（目前）" summary={fmtTWD(s.monthlyIncome, true)} isOpen={openSections.has('income')} onToggle={() => toggleSection('income')} accentColor={ACCENT.income} status={getSectionStatus('income', data)} />
+          <SectionHeader icon={TrendingUp} num="①" title="月收入" hint="(如：薪資、租金)" summary={fmtTWD(s.monthlyIncome, true)} isOpen={openSections.has('income')} onToggle={() => toggleSection('income')} accentColor={ACCENT.income} status={getSectionStatus('income', data)} />
           {openSections.has('income') && (
             <Card className="rounded-xl p-3 mt-1">
               <div className="grid grid-cols-2 gap-3">
@@ -302,7 +341,7 @@ export default function S1FinancialInput() {
                 </div>
                 <div>
                   <label className="text-xs text-dim mb-1 block">薪資成長率（年）</label>
-                  <NumInput val={data.salaryGrowthRate} onChange={v => updateData({ salaryGrowthRate: v })} suffix="%" />
+                  <NumInput val={data.salaryGrowthRate} onChange={v => updateData({ salaryGrowthRate: v })} suffix="%" decimals={1} />
                 </div>
                 <div>
                   <label className="text-xs text-dim mb-1 block">租金收入</label>
@@ -327,7 +366,7 @@ export default function S1FinancialInput() {
 
         {/* ② 月支出 */}
         <div>
-          <SectionHeader icon={ShoppingCart} num="②" title="月支出（嫺人三分類法）" summary={fmtTWD(s.monthlyExpense, true)} isOpen={openSections.has('expense')} onToggle={() => toggleSection('expense')} accentColor={ACCENT.expense} status={getSectionStatus('expense', data)} />
+          <SectionHeader icon={ShoppingCart} num="②" title="月支出" hint="(如：生活費、保險)" summary={fmtTWD(s.monthlyExpense, true)} isOpen={openSections.has('expense')} onToggle={() => toggleSection('expense')} accentColor={ACCENT.expense} status={getSectionStatus('expense', data)} />
           {openSections.has('expense') && (
             <Card className="rounded-xl p-3 mt-1">
               {/* 生活必需 */}
@@ -345,7 +384,7 @@ export default function S1FinancialInput() {
                     <div className="w-32 shrink-0">
                       <NumInput val={item.amount} onChange={v => updateEssential(item.id, 'amount', v)} />
                     </div>
-                    <button onClick={() => removeEssential(item.id)} className="text-red-400 hover:text-red-600 shrink-0"><Trash2 size={14} /></button>
+                    <button onClick={() => removeEssential(item.id)} className="text-red-600 hover:text-red-600 shrink-0"><Trash2 size={14} /></button>
                   </div>
                 ))}
               </div>
@@ -356,7 +395,7 @@ export default function S1FinancialInput() {
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-main">② 生活風格</span>
                     <span className="text-xs text-dim">{fmtTWD(s.monthlyLifestyle, true)}</span>
-                    {lifestyleRatioWarn && <span className="text-xs text-orange-400 font-medium">⚠️ {s.lifestyleRatio.toFixed(0)}%（建議≤30%）</span>}
+                    {lifestyleRatioWarn && <span className="text-xs text-orange-600 font-medium">⚠️ {s.lifestyleRatio.toFixed(0)}%（建議≤30%）</span>}
                   </div>
                   <button onClick={addLifestyle} className="flex items-center gap-1 text-xs text-blue-600 hover:underline"><Plus size={12} />新增</button>
                 </div>
@@ -366,7 +405,7 @@ export default function S1FinancialInput() {
                     <div className="w-32 shrink-0">
                       <NumInput val={item.amount} onChange={v => updateLifestyle(item.id, 'amount', v)} />
                     </div>
-                    <button onClick={() => removeLifestyle(item.id)} className="text-red-400 hover:text-red-600 shrink-0"><Trash2 size={14} /></button>
+                    <button onClick={() => removeLifestyle(item.id)} className="text-red-600 hover:text-red-600 shrink-0"><Trash2 size={14} /></button>
                   </div>
                 ))}
               </div>
@@ -381,7 +420,7 @@ export default function S1FinancialInput() {
                   <div key={item.id} className="bg-elevated rounded-xl p-3 mb-2 space-y-2">
                     <div className="flex gap-2">
                       {textInput(item.name, v => updateTransitional(item.id, 'name', v), '項目名稱')}
-                      <button onClick={() => removeTransitional(item.id)} className="text-red-400 hover:text-red-600 shrink-0"><Trash2 size={14} /></button>
+                      <button onClick={() => removeTransitional(item.id)} className="text-red-600 hover:text-red-600 shrink-0"><Trash2 size={14} /></button>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
@@ -404,19 +443,25 @@ export default function S1FinancialInput() {
           )}
         </div>
 
+        {/* 群組：資產負債 */}
+        <div className="flex items-center gap-2 pt-2 pb-0.5">
+          <span className="text-xs font-bold text-main shrink-0">資產負債</span>
+          <div className="flex-1 h-px bg-[var(--color-border)]" />
+        </div>
+
         {/* ③ 現金資產 */}
         <div>
-          <SectionHeader icon={Landmark} num="③" title="現金資產" summary={fmtTWD(s.totalAssets, true)} isOpen={openSections.has('assets')} onToggle={() => toggleSection('assets')} accentColor={ACCENT.assets} status={getSectionStatus('assets', data)} />
+          <SectionHeader icon={Landmark} num="③" title="現金資產" hint="(如：存款、定存)" summary={fmtTWD(s.totalAssets, true)} isOpen={openSections.has('assets')} onToggle={() => toggleSection('assets')} accentColor={ACCENT.assets} status={getSectionStatus('assets', data)} />
           {openSections.has('assets') && (
             <Card className="rounded-xl p-3 mt-1">
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: '現金/活存', key: 'cash' as const, bucket: '短期桶', bucketColor: 'text-blue-600 bg-blue-50' },
                   { label: '定存', key: 'fixedDeposit' as const, bucket: '短期桶', bucketColor: 'text-blue-600 bg-blue-50' },
-                  { label: '儲蓄險現值', key: 'savingsInsurance' as const, bucket: '中期桶', bucketColor: 'text-purple-400 bg-purple-900/30' },
-                  { label: '不動產自住市值', key: 'realEstateSelfUse' as const, bucket: '獨立', bucketColor: 'text-dim bg-elevated' },
-                  { label: '不動產出租市值', key: 'realEstateRental' as const, bucket: '長期桶', bucketColor: 'text-orange-400 bg-orange-900/30' },
-                  { label: '其他資產', key: 'otherAssets' as const, bucket: '長期桶', bucketColor: 'text-orange-400 bg-orange-900/30' },
+                  { label: '儲蓄險現值', key: 'savingsInsurance' as const, bucket: '中期桶', bucketColor: 'text-purple-600 bg-purple-50' },
+                  { label: '不動產自住市值', key: 'realEstateSelfUse' as const, bucket: '不參與投資', bucketColor: 'text-dim bg-elevated' },
+                  { label: '不動產出租市值', key: 'realEstateRental' as const, bucket: '僅計租金', bucketColor: 'text-dim bg-elevated' },
+                  { label: '其他資產', key: 'otherAssets' as const, bucket: '長期桶', bucketColor: 'text-orange-600 bg-orange-50' },
                 ].map(item => (
                   <div key={item.key}>
                     <label className="text-xs text-dim mb-1 flex items-center gap-1.5">
@@ -431,9 +476,9 @@ export default function S1FinancialInput() {
           )}
         </div>
 
-        {/* ④ 投資持倉 */}
+        {/* ④ 投資組合 */}
         <div>
-          <SectionHeader icon={BarChart3} num="④" title="投資持倉" summary={fmtTWD(s.investableAssets, true)} isOpen={openSections.has('investments')} onToggle={() => toggleSection('investments')} accentColor={ACCENT.investments} status={getSectionStatus('investments', data)} />
+          <SectionHeader icon={BarChart3} num="④" title="投資組合" hint="(如：股票、ETF、基金)" summary={fmtTWD(s.investableAssets, true)} isOpen={openSections.has('investments')} onToggle={() => toggleSection('investments')} accentColor={ACCENT.investments} status={getSectionStatus('investments', data)} />
           {openSections.has('investments') && (
             <Card className="rounded-t-none border-t-0 p-3 space-y-4">
 
@@ -442,7 +487,7 @@ export default function S1FinancialInput() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <span className="text-xs font-semibold text-dim">個股持倉</span>
-                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded font-medium text-orange-400 bg-orange-900/30">長期桶</span>
+                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded font-medium text-orange-600 bg-orange-50">長期桶</span>
                   </div>
                   <button onClick={addStock} className="flex items-center gap-1.5 text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100">
                     <Plus size={12} /> 新增
@@ -459,7 +504,7 @@ export default function S1FinancialInput() {
                     return (
                       <div key={stock.id} className="bg-elevated rounded-xl p-3 space-y-2">
                         <div className="flex items-center justify-end">
-                          <button onClick={() => removeStock(stock.id)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
+                          <button onClick={() => removeStock(stock.id)} className="text-red-600 hover:text-red-600 p-1"><Trash2 size={14} /></button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
@@ -483,18 +528,18 @@ export default function S1FinancialInput() {
                           </div>
                           <div>
                             <label className="text-xs text-dim block mb-1">成本均價 ({stock.currency})</label>
-                            <NumInput val={stock.costPrice} onChange={v => updateStock(stock.id, 'costPrice', v)} />
+                            <NumInput val={stock.costPrice} onChange={v => updateStock(stock.id, 'costPrice', v)} decimals={2} />
                           </div>
                         </div>
                         <div className="flex items-center justify-between pt-1 border-t border-base">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs text-dim">市值</span>
-                            <span className="text-xs font-semibold text-[#E0E0E0]">{fmtTWD(val, true)}</span>
+                            <span className="text-xs font-semibold text-main">{fmtTWD(val, true)}</span>
                           </div>
                           {stock.costPrice > 0 && (
                             <div className="flex items-center gap-2">
-                              <span className={`text-xs font-medium ${pnlAmt >= 0 ? 'text-green-600' : 'text-red-400'}`}>{pnlAmt >= 0 ? '+' : ''}{fmtTWD(pnlAmt, true)}</span>
-                              <span className={`text-xs font-medium ${pnl >= 0 ? 'text-green-600' : 'text-red-400'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(1)}%</span>
+                              <span className={`text-xs font-medium ${pnlAmt >= 0 ? 'text-green-600' : 'text-red-600'}`}>{pnlAmt >= 0 ? '+' : ''}{fmtTWD(pnlAmt, true)}</span>
+                              <span className={`text-xs font-medium ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(1)}%</span>
                             </div>
                           )}
                         </div>
@@ -524,11 +569,11 @@ export default function S1FinancialInput() {
                     const pnlAmt = val - costTotal
                     const pnl = etf.costPrice > 0 ? ((etf.currentPrice - etf.costPrice) / etf.costPrice) * 100 : 0
                     const bucket = etf.bondRatio >= 55 ? '中期桶' : '長期桶'
-                    const bucketColor = etf.bondRatio >= 55 ? 'text-purple-400 bg-purple-900/30' : 'text-orange-400 bg-orange-900/30'
+                    const bucketColor = etf.bondRatio >= 55 ? 'text-purple-600 bg-purple-50' : 'text-orange-600 bg-orange-50'
                     return (
                       <div key={etf.id} className="bg-elevated rounded-xl p-3 space-y-2">
                         <div className="flex items-center justify-end">
-                          <button onClick={() => removeETF(etf.id)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
+                          <button onClick={() => removeETF(etf.id)} className="text-red-600 hover:text-red-600 p-1"><Trash2 size={14} /></button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
@@ -552,19 +597,19 @@ export default function S1FinancialInput() {
                           </div>
                           <div>
                             <label className="text-xs text-dim block mb-1">成本均價</label>
-                            <NumInput val={etf.costPrice} onChange={v => updateETF(etf.id, 'costPrice', v)} />
+                            <NumInput val={etf.costPrice} onChange={v => updateETF(etf.id, 'costPrice', v)} decimals={2} />
                           </div>
                         </div>
                         <div className="flex items-center justify-between pt-1 border-t border-base">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs text-dim">市值</span>
-                            <span className="text-xs font-semibold text-[#E0E0E0]">{fmtTWD(val, true)}</span>
+                            <span className="text-xs font-semibold text-main">{fmtTWD(val, true)}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             {etf.costPrice > 0 && (
                               <>
-                                <span className={`text-xs font-medium ${pnlAmt >= 0 ? 'text-green-600' : 'text-red-400'}`}>{pnlAmt >= 0 ? '+' : ''}{fmtTWD(pnlAmt, true)}</span>
-                                <span className={`text-xs font-medium ${pnl >= 0 ? 'text-green-600' : 'text-red-400'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(1)}%</span>
+                                <span className={`text-xs font-medium ${pnlAmt >= 0 ? 'text-green-600' : 'text-red-600'}`}>{pnlAmt >= 0 ? '+' : ''}{fmtTWD(pnlAmt, true)}</span>
+                                <span className={`text-xs font-medium ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>{pnl >= 0 ? '+' : ''}{pnl.toFixed(1)}%</span>
                               </>
                             )}
                             <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${bucketColor}`}>{bucket}</span>
@@ -595,11 +640,11 @@ export default function S1FinancialInput() {
                     const pnlAmt = fund.costNav > 0 ? (fund.nav - fund.costNav) * fund.units * currencyRate : 0
                     const pnlPct = fund.costNav > 0 ? ((fund.nav - fund.costNav) / fund.costNav) * 100 : 0
                     const bucket = fund.bondRatio >= 55 ? '中期桶' : '長期桶'
-                    const bucketColor = fund.bondRatio >= 55 ? 'text-purple-400 bg-purple-900/30' : 'text-orange-400 bg-orange-900/30'
+                    const bucketColor = fund.bondRatio >= 55 ? 'text-purple-600 bg-purple-50' : 'text-orange-600 bg-orange-50'
                     return (
                       <div key={fund.id} className="bg-elevated rounded-xl p-3 space-y-2">
                         <div className="flex items-center justify-end">
-                          <button onClick={() => removeFund(fund.id)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
+                          <button onClick={() => removeFund(fund.id)} className="text-red-600 hover:text-red-600 p-1"><Trash2 size={14} /></button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
@@ -614,7 +659,7 @@ export default function S1FinancialInput() {
                           </div>
                           <div>
                             <label className="text-xs text-dim block mb-1">持有單位數</label>
-                            <NumInput val={fund.units} onChange={v => updateFund(fund.id, 'units', v)} />
+                            <NumInput val={fund.units} onChange={v => updateFund(fund.id, 'units', v)} decimals={2} />
                           </div>
                           <div>
                             <label className="text-xs text-dim block mb-1">幣別</label>
@@ -626,19 +671,19 @@ export default function S1FinancialInput() {
                           </div>
                           <div>
                             <label className="text-xs text-dim block mb-1">成本淨值</label>
-                            <NumInput val={fund.costNav} onChange={v => updateFund(fund.id, 'costNav', v)} />
+                            <NumInput val={fund.costNav} onChange={v => updateFund(fund.id, 'costNav', v)} decimals={2} />
                           </div>
                         </div>
                         <div className="flex items-center justify-between pt-1 border-t border-base">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs text-dim">市值</span>
-                            <span className="text-xs font-semibold text-[#E0E0E0]">{fmtTWD(val, true)}</span>
+                            <span className="text-xs font-semibold text-main">{fmtTWD(val, true)}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             {fund.costNav > 0 && (
                               <>
-                                <span className={`text-xs font-medium ${pnlAmt >= 0 ? 'text-green-600' : 'text-red-400'}`}>{pnlAmt >= 0 ? '+' : ''}{fmtTWD(pnlAmt, true)}</span>
-                                <span className={`text-xs font-medium ${pnlPct >= 0 ? 'text-green-600' : 'text-red-400'}`}>{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}%</span>
+                                <span className={`text-xs font-medium ${pnlAmt >= 0 ? 'text-green-600' : 'text-red-600'}`}>{pnlAmt >= 0 ? '+' : ''}{fmtTWD(pnlAmt, true)}</span>
+                                <span className={`text-xs font-medium ${pnlPct >= 0 ? 'text-green-600' : 'text-red-600'}`}>{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}%</span>
                               </>
                             )}
                             <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${bucketColor}`}>{bucket}</span>
@@ -656,7 +701,7 @@ export default function S1FinancialInput() {
 
         {/* ⑤ 負債 */}
         <div>
-          <SectionHeader icon={CreditCard} num="⑤" title="負債" summary={totalMonthlyLiability > 0 ? `月付 ${fmtTWD(totalMonthlyLiability, true)}` : undefined} isOpen={openSections.has('liability')} onToggle={() => toggleSection('liability')} accentColor={ACCENT.liability} status={getSectionStatus('liability', data)} />
+          <SectionHeader icon={CreditCard} num="⑤" title="負債" hint="(如：房貸、車貸、信貸)" summary={totalMonthlyLiability > 0 ? `月付 ${fmtTWD(totalMonthlyLiability, true)}` : undefined} isOpen={openSections.has('liability')} onToggle={() => toggleSection('liability')} accentColor={ACCENT.liability} status={getSectionStatus('liability', data)} />
           {openSections.has('liability') && (
             <Card className="rounded-xl p-3 mt-1">
               {data.liabilities.length > 0 && (
@@ -676,7 +721,7 @@ export default function S1FinancialInput() {
                     <div key={item.id} className="bg-elevated rounded-xl p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         {textInput(item.name, v => updateLiability(item.id, 'name', v), '如：房貸')}
-                        <button onClick={() => removeLiability(item.id)} className="text-red-400 hover:text-red-600 ml-2 shrink-0"><Trash2 size={14} /></button>
+                        <button onClick={() => removeLiability(item.id)} className="text-red-600 hover:text-red-600 ml-2 shrink-0"><Trash2 size={14} /></button>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         <div>
@@ -689,7 +734,7 @@ export default function S1FinancialInput() {
                         </div>
                         <div>
                           <p className="text-xs text-dim mb-1">預計還清</p>
-                          <p className="text-sm font-semibold text-[#E0E0E0]">{clearLabel}</p>
+                          <p className="text-sm font-semibold text-main">{clearLabel}</p>
                         </div>
                       </div>
                     </div>
@@ -702,7 +747,7 @@ export default function S1FinancialInput() {
 
         {/* ⑥ 規劃設定（基本資料 + 計算假設） */}
         <div>
-          <SectionHeader icon={Settings} num="⑥" title="規劃設定" isOpen={openSections.has('settings')} onToggle={() => toggleSection('settings')} accentColor={ACCENT.settings} status={getSectionStatus('settings', data)} />
+          <SectionHeader icon={Settings} num="⑥" title="規劃設定" hint="(退休年齡、投報率等)" isOpen={openSections.has('settings')} onToggle={() => toggleSection('settings')} accentColor={ACCENT.settings} status={getSectionStatus('settings', data)} />
           {openSections.has('settings') && (
             <Card className="rounded-xl p-3 mt-1 space-y-4">
               {/* 基本資料 */}
@@ -729,11 +774,11 @@ export default function S1FinancialInput() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-dim mb-1 block">通膨率（年）</label>
-                    <NumInput val={data.inflationRate} onChange={v => updateData({ inflationRate: v })} suffix="%" />
+                    <NumInput val={data.inflationRate} onChange={v => updateData({ inflationRate: v })} suffix="%" decimals={1} />
                   </div>
                   <div>
                     <label className="text-xs text-dim mb-1 block">投資報酬率（年）</label>
-                    <NumInput val={data.investmentReturn} onChange={v => updateData({ investmentReturn: v })} suffix="%" />
+                    <NumInput val={data.investmentReturn} onChange={v => updateData({ investmentReturn: v })} suffix="%" decimals={1} />
                   </div>
                 </div>
               </div>
@@ -744,7 +789,7 @@ export default function S1FinancialInput() {
       </div>
 
       {/* 固定底部儲存列 */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A] border-t border-base px-4 py-3 flex items-center gap-3" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-base px-4 py-3 flex items-center gap-3" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
         <span className={`text-xs shrink-0 ${completedCount === 6 ? 'text-green-600' : 'text-dim'}`}>
           {completedCount === 6 ? '已完成 ✓' : `已填 ${completedCount} / 6 分區`}
         </span>

@@ -39,7 +39,7 @@ export default function StockSearch({ value, market, type, placeholder = '代號
   return (
     <div ref={ref} className="relative w-full">
       <div className="relative">
-        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-dim" />
         <input
           type="text"
           value={value}
@@ -58,7 +58,7 @@ export default function StockSearch({ value, market, type, placeholder = '代號
               className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-blue-50 text-left border-b border-slate-50 last:border-0"
             >
               <div>
-                <span className="font-mono text-xs font-semibold text-slate-500 mr-2">{item.symbol}</span>
+                <span className="font-mono text-xs font-semibold text-dim mr-2">{item.symbol}</span>
                 <span className="text-sm text-slate-700">{item.name}</span>
               </div>
               <div className="text-right shrink-0 ml-2">

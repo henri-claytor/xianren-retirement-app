@@ -5,10 +5,10 @@ import { fmtTWD } from '../components/Layout'
 import { ArrowRight } from 'lucide-react'
 
 const statusColorMap = {
-  blue:  { bg: 'bg-blue-900/30',  border: 'border-blue-800/40',  text: 'text-blue-200',  badge: 'bg-blue-600' },
-  green: { bg: 'bg-green-900/30', border: 'border-green-800/40', text: 'text-green-200', badge: 'bg-green-600' },
-  amber: { bg: 'bg-amber-900/30', border: 'border-amber-800/40', text: 'text-amber-200', badge: 'bg-amber-600' },
-  red:   { bg: 'bg-red-900/30',   border: 'border-red-800/40',   text: 'text-red-200',   badge: 'bg-red-600' },
+  blue:  { bg: 'bg-blue-50',  border: 'border-blue-200',  text: 'text-blue-700',  badge: 'bg-blue-600' },
+  green: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', badge: 'bg-green-600' },
+  amber: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', badge: 'bg-amber-600' },
+  red:   { bg: 'bg-red-50',   border: 'border-red-200',   text: 'text-red-700',   badge: 'bg-red-600' },
 }
 
 function DimensionCard({
@@ -23,18 +23,18 @@ function DimensionCard({
   color: 'blue' | 'green' | 'amber' | 'red' | 'gray'
 }) {
   const colorMap = {
-    blue:  { value: 'text-blue-300',  bg: 'bg-blue-900/20',  border: 'border-blue-800/30' },
-    green: { value: 'text-green-300', bg: 'bg-green-900/20', border: 'border-green-800/30' },
-    amber: { value: 'text-amber-300', bg: 'bg-amber-900/20', border: 'border-amber-800/30' },
-    red:   { value: 'text-red-300',   bg: 'bg-red-900/20',   border: 'border-red-800/30' },
+    blue:  { value: 'text-blue-700',  bg: 'bg-blue-50',  border: 'border-blue-200' },
+    green: { value: 'text-green-700', bg: 'bg-green-50', border: 'border-green-200' },
+    amber: { value: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
+    red:   { value: 'text-red-700',   bg: 'bg-red-50',   border: 'border-red-200' },
     gray:  { value: 'text-dim', bg: 'bg-surface',    border: 'border-base' },
   }
   const c = colorMap[color]
   return (
     <div className={`rounded-xl p-3 border ${c.bg} ${c.border}`}>
-      <p className="text-[#A0A0A0] text-xs mb-1">{label}</p>
+      <p className="text-dim text-xs mb-1">{label}</p>
       <p className={`font-bold text-base ${c.value}`}>{value}</p>
-      {sub && <p className="text-[#707070] text-xs mt-0.5">{sub}</p>}
+      {sub && <p className="text-faint text-xs mt-0.5">{sub}</p>}
     </div>
   )
 }
@@ -117,14 +117,14 @@ export default function RetirementDiagnosis() {
         <p className={`text-sm font-medium mb-2 ${c.text}`}>{status.description}</p>
         <div className="flex items-center gap-3">
           <span className="text-white font-bold text-lg">{Math.min(achievementRate, 100).toFixed(0)}%</span>
-          <span className="text-[#707070] text-xs">達成率</span>
+          <span className="text-faint text-xs">達成率</span>
           <span className="text-white font-bold text-lg">{yearsToRetire}</span>
-          <span className="text-[#707070] text-xs">年後退休</span>
+          <span className="text-faint text-xs">年後退休</span>
         </div>
       </div>
 
       {/* 四個維度 */}
-      <h2 className="font-semibold text-[#D4D4D4] mb-2" style={{ fontSize: 'var(--font-size-body)' }}>四大維度分析</h2>
+      <h2 className="font-semibold text-main mb-2" style={{ fontSize: 'var(--font-size-body)' }}>四大維度分析</h2>
       <div className="grid grid-cols-2 gap-3 mb-5">
         <DimensionCard
           label="財務達成度"
@@ -155,15 +155,15 @@ export default function RetirementDiagnosis() {
       {/* 行動建議 */}
       {recommendations.length > 0 && (
         <>
-          <h2 className="font-semibold text-[#D4D4D4] mb-2" style={{ fontSize: 'var(--font-size-body)' }}>行動建議</h2>
+          <h2 className="font-semibold text-main mb-2" style={{ fontSize: 'var(--font-size-body)' }}>行動建議</h2>
           <div className="space-y-3">
             {recommendations.map((r, i) => (
               <div key={i} className="bg-surface rounded-2xl border border-base p-4">
                 <p className="font-semibold text-white text-sm mb-1">{r.title}</p>
-                <p className="text-[#A0A0A0] text-xs mb-3">{r.desc}</p>
+                <p className="text-dim text-xs mb-3">{r.desc}</p>
                 <button
                   onClick={() => navigate(r.to)}
-                  className="flex items-center gap-1.5 text-blue-400 text-xs font-semibold hover:text-blue-300 transition-colors"
+                  className="flex items-center gap-1.5 text-blue-600 text-xs font-semibold hover:text-blue-700 transition-colors"
                 >
                   {r.cta}
                   <ArrowRight size={12} />

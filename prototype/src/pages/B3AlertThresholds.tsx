@@ -1,21 +1,22 @@
+// B3 再平衡規則（對應課程 CH4）
+// 三條觸發規則：R1 市場跌幅 / R2 短桶警戒 / R3 年度再平衡
+// 由原 B3AlertThresholds 改寫：保留警戒門檻設定作為 R2 的細部調整
+// 註：檔名保持 B3AlertThresholds.tsx 以避免 import 路徑連動修改；元件已重新命名
+
 import { useState, useEffect } from 'react'
-import { Bell } from 'lucide-react'
+import { RefreshCw, AlertTriangle, TrendingDown, Calendar, Info } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { PageHeader, Card, fmtTWD } from '../components/Layout'
+import CourseBadge from '../components/CourseBadge'
+import { useMarkVisited } from '../hooks/useMarkVisited'
 
 const ALERT_CONFIG_KEY = 'xianren_alert_config'
 
 interface AlertConfig {
-  shortMinMonths: number  // 短期桶最低月數
-  midMinYears: number     // 中期桶最低年數
-  longMinYears: number    // 長期桶最低年數
+  shortMinMonths: number
 }
 
-const DEFAULT_CONFIG: AlertConfig = {
-  shortMinMonths: 6,
-  midMinYears: 3,
-  longMinYears: 10,
-}
+const DEFAULT_CONFIG: AlertConfig = { shortMinMonths: 6 }
 
 function loadConfig(): AlertConfig {
   try {
@@ -25,189 +26,198 @@ function loadConfig(): AlertConfig {
   return DEFAULT_CONFIG
 }
 
-function BucketAlert({
-  label, emoji, current, threshold,
-  suggestion, thresholdLabel,
-}: {
-  label: string
-  emoji: string
-  current: number
-  threshold: number
-  suggestion: string
-  thresholdLabel: string
-}) {
-  const ratio = threshold > 0 ? current / threshold : 1
-  const isRed    = ratio < 1
-  const isYellow = ratio >= 1 && ratio < 1.2
-  const statusEmoji = isRed ? '🔴' : isYellow ? '🟡' : '🟢'
-  const statusLabel = isRed ? '低於警戒水位' : isYellow ? '接近警戒水位' : '健康'
-  const barColor = isRed ? 'bg-red-500' : isYellow ? 'bg-amber-400' : 'bg-green-500'
+type Severity = 'green' | 'amber' | 'red'
 
+function SeverityBadge({ s }: { s: Severity }) {
+  const map = {
+    green: { bg: 'bg-green-50 text-green-700 border-green-200', label: '正常' },
+    amber: { bg: 'bg-amber-50 text-amber-700 border-amber-200', label: '接近' },
+    red:   { bg: 'bg-red-50 text-red-700 border-red-200',       label: '已觸發' },
+  }
+  const c = map[s]
   return (
-    <Card className="p-3">
-      <div className="flex items-start justify-between mb-3">
+    <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${c.bg}`}>
+      {c.label}
+    </span>
+  )
+}
+
+function RuleCard({
+  icon: Icon, ruleId, title, trigger, status, action, children,
+}: {
+  icon: React.ElementType
+  ruleId: string
+  title: string
+  trigger: string
+  status: Severity
+  action: string
+  children?: React.ReactNode
+}) {
+  const borderColor =
+    status === 'red' ? 'border-red-500/50' :
+    status === 'amber' ? 'border-amber-500/50' :
+    'border-base'
+  return (
+    <Card className={`p-4 border-2 ${borderColor}`}>
+      <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-lg">{emoji}</span>
-          <span className="font-semibold text-main text-sm">{label}</span>
+          <Icon size={18} className="text-dim" />
+          <div>
+            <p className="text-[10px] text-faint font-mono">{ruleId}</p>
+            <h3 className="text-sm font-semibold text-main">{title}</h3>
+          </div>
         </div>
-        <span className={`px-2 py-1 rounded-full font-medium ${
-          isRed ? 'bg-red-50 text-red-600' :
-          isYellow ? 'bg-amber-50 text-amber-600' :
-          'bg-green-50 text-green-600'
-        }`}>
-          {statusEmoji} {statusLabel}
-        </span>
+        <SeverityBadge s={status} />
       </div>
-
-      <div className="mb-3">
-        <div className="flex justify-between text-dim mb-1" style={{ fontSize: 'var(--font-size-label)' }}>
-          <span>目前：{fmtTWD(current, true)}</span>
-          <span>警戒線：{fmtTWD(threshold, true)}（{thresholdLabel}）</span>
+      <div className="space-y-2 text-xs">
+        <div>
+          <p className="text-faint text-[10px] mb-0.5">觸發條件</p>
+          <p className="text-dim">{trigger}</p>
         </div>
-        <div className="h-2.5 bg-elevated rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${barColor}`}
-            style={{ width: `${Math.min(ratio * 100, 100)}%` }}
-          />
+        <div>
+          <p className="text-faint text-[10px] mb-0.5">建議動作</p>
+          <p className="text-main">{action}</p>
         </div>
-        <p className="text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}>
-          {threshold > 0 ? `${(ratio * 100).toFixed(0)}% 覆蓋率` : '—'}
-        </p>
+        {children}
       </div>
-
-      {(isRed || isYellow) && (
-        <div className={`rounded-lg p-3 ${isRed ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`} style={{ fontSize: 'var(--font-size-label)' }}>
-          💡 {suggestion}
-        </div>
-      )}
     </Card>
   )
 }
 
-export default function B3AlertThresholds() {
+export default function B3RebalanceRules() {
+  useMarkVisited('b3')
+
   const { data } = useStore()
   const s = calcSummary(data)
 
-  // 3.5 載入設定
   const [config, setConfig] = useState<AlertConfig>(loadConfig)
-
-  // 3.4 儲存設定
   useEffect(() => {
     localStorage.setItem(ALERT_CONFIG_KEY, JSON.stringify(config))
   }, [config])
 
   const monthlyExpense = s.monthlyExpense
+  const shortMonthsCoverage = monthlyExpense > 0 ? s.shortBucket / monthlyExpense : 0
 
-  // 各桶警戒門檻（金額）
-  const shortThreshold = monthlyExpense * config.shortMinMonths
-  const midThreshold   = monthlyExpense * 12 * config.midMinYears
-  const longThreshold  = monthlyExpense * 12 * config.longMinYears
+  // R2 狀態
+  let r2Severity: Severity = 'green'
+  if (shortMonthsCoverage < config.shortMinMonths) r2Severity = 'red'
+  else if (shortMonthsCoverage < config.shortMinMonths + 3) r2Severity = 'amber'
 
-  // 整體健康
-  const allHealthy = s.shortBucket >= shortThreshold && s.midBucket >= midThreshold && s.longBucket >= longThreshold
-  const anyRed     = s.shortBucket < shortThreshold || s.midBucket < midThreshold || s.longBucket < longThreshold
+  const r2Gap = Math.max(config.shortMinMonths * monthlyExpense - s.shortBucket, 0)
 
-  // 補充建議金額
-  const shortGap = Math.max(shortThreshold - s.shortBucket, 0)
-  const midGap   = Math.max(midThreshold   - s.midBucket,   0)
-  const longGap  = Math.max(longThreshold  - s.longBucket,  0)
+  // R3 年度
+  const currentMonth = new Date().getMonth() + 1
+  const annualReminderMonth = 1 // 預設每年 1 月
+  const monthsToAnnual =
+    annualReminderMonth > currentMonth
+      ? annualReminderMonth - currentMonth
+      : 12 - currentMonth + annualReminderMonth
+  const r3Severity: Severity = monthsToAnnual <= 1 ? 'amber' : 'green'
 
   return (
     <div>
-      <PageHeader title="財務警戒水位" subtitle="設定三桶金最低門檻，即時監控財務健康度" icon={Bell} />
+      <PageHeader title="再平衡規則" subtitle="三桶金再平衡觸發條件與目前狀態" icon={RefreshCw} />
 
       <div className="px-4 py-2 space-y-3">
-        {/* 整體狀態 */}
-        <div className={`rounded-2xl p-4 ${allHealthy ? 'bg-green-50 border-2 border-green-200' : anyRed ? 'bg-red-50 border-2 border-red-200' : 'bg-amber-50 border-2 border-amber-200'}`}>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{allHealthy ? '🟢' : anyRed ? '🔴' : '🟡'}</span>
-            <div>
-              <p className="font-bold text-main">
-                {allHealthy ? '財務狀況健康，三桶均達標' : anyRed ? '有桶低於警戒水位，建議補充' : '部分桶接近警戒水位，請注意'}
-              </p>
-              <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
-                基於目前三桶金：短期 {fmtTWD(s.shortBucket, true)} / 中期 {fmtTWD(s.midBucket, true)} / 長期 {fmtTWD(s.longBucket, true)}
-              </p>
-            </div>
-          </div>
+        {/* 頁首徽章 */}
+        <div className="flex items-center gap-2 mb-1">
+          <CourseBadge ch="CH4" showLabel />
         </div>
 
-        {/* 各桶警戒狀態 */}
+        {/* 三條規則 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <BucketAlert
-            label="短期桶" emoji="🔵"
-            current={s.shortBucket} threshold={shortThreshold}
-            thresholdLabel={`${config.shortMinMonths} 個月支出`}
-            suggestion={shortGap > 0
-              ? `從中期桶移轉 ${fmtTWD(shortGap, true)} 至短期桶`
-              : '短期桶充足'}
-          />
-          <BucketAlert
-            label="中期桶" emoji="🟣"
-            current={s.midBucket} threshold={midThreshold}
-            thresholdLabel={`${config.midMinYears} 年支出`}
-            suggestion={midGap > 0
-              ? `考慮從長期桶提撥 ${fmtTWD(midGap, true)} 補充中期桶`
-              : '中期桶充足'}
-          />
-          <BucketAlert
-            label="長期桶" emoji="🟠"
-            current={s.longBucket} threshold={longThreshold}
-            thresholdLabel={`${config.longMinYears} 年支出`}
-            suggestion={longGap > 0
-              ? `長期桶偏低，建議增加投資部位或減少支出`
-              : '長期桶充足'}
-          />
+          {/* R1 市場跌幅 */}
+          <RuleCard
+            icon={TrendingDown}
+            ruleId="R1"
+            title="市場跌幅觸發"
+            trigger="大盤（如 0050 / S&P500）從近期高點跌幅 > 20%"
+            status="green"
+            action="若長期桶跌深，考慮由中桶逆勢加碼長桶；避免恐慌停損"
+          >
+            <p className="text-[10px] text-faint mt-1">
+              💡 需手動判斷市場狀態，App 不自動偵測
+            </p>
+          </RuleCard>
+
+          {/* R2 短桶警戒 */}
+          <RuleCard
+            icon={AlertTriangle}
+            ruleId="R2"
+            title="短桶警戒"
+            trigger={`短桶可撐月數 < ${config.shortMinMonths} 個月生活費`}
+            status={r2Severity}
+            action={
+              r2Severity === 'red'
+                ? `由中桶移轉 ${fmtTWD(r2Gap, true)} 至短桶，補足至 ${config.shortMinMonths} 個月`
+                : r2Severity === 'amber'
+                ? '接近警戒，近期留意中桶 → 短桶的補充時點'
+                : '短桶充足'
+            }
+          >
+            <div className="pt-2 border-t border-base/60">
+              <div className="flex justify-between text-[11px] mb-1">
+                <span className="text-dim">目前短桶</span>
+                <span className="text-main font-semibold">{fmtTWD(s.shortBucket, true)}</span>
+              </div>
+              <div className="flex justify-between text-[11px] mb-1">
+                <span className="text-dim">可撐月數</span>
+                <span className={`font-semibold ${
+                  r2Severity === 'red' ? 'text-red-600' :
+                  r2Severity === 'amber' ? 'text-amber-600' : 'text-green-600'
+                }`}>
+                  {monthlyExpense > 0 ? `${shortMonthsCoverage.toFixed(1)} 個月` : '—'}
+                </span>
+              </div>
+              <label className="text-faint text-[10px] block mt-2 mb-1">
+                警戒門檻：<strong className="text-main">{config.shortMinMonths} 個月</strong>
+              </label>
+              <input
+                type="range" min={3} max={24} step={1}
+                value={config.shortMinMonths}
+                onChange={e => setConfig({ shortMinMonths: Number(e.target.value) })}
+                className="w-full"
+              />
+            </div>
+          </RuleCard>
+
+          {/* R3 年度再平衡 */}
+          <RuleCard
+            icon={Calendar}
+            ruleId="R3"
+            title="年度定期再平衡"
+            trigger={`每年 ${annualReminderMonth} 月定期檢視`}
+            status={r3Severity}
+            action={
+              monthsToAnnual <= 1
+                ? '再平衡月份將至，建議至「再平衡建議」頁檢視目前 vs 目標配置'
+                : `距離下次定期再平衡還有 ${monthsToAnnual} 個月`
+            }
+          >
+            <p className="text-[10px] text-faint mt-1">
+              💡 市場大漲大跌時，比例自然偏移，年度回歸原定比例
+            </p>
+          </RuleCard>
         </div>
 
-        {/* 警戒門檻設定 */}
+        {/* 使用說明 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-main mb-3">⚙️ 警戒門檻設定</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                短期桶最低月數：<strong className="text-main">{config.shortMinMonths} 個月</strong>
-                <span className="ml-2 text-dim">（門檻 = {fmtTWD(shortThreshold, true)}）</span>
-              </label>
-              <input type="range" min={3} max={24} step={1}
-                value={config.shortMinMonths}
-                onChange={e => setConfig(c => ({ ...c, shortMinMonths: Number(e.target.value) }))}
-                className="w-full" />
-              <div className="flex justify-between text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}>
-                <span>3個月（最低）</span><span>6個月（建議）</span><span>24個月</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                中期桶最低年數：<strong className="text-main">{config.midMinYears} 年</strong>
-                <span className="ml-2 text-dim">（門檻 = {fmtTWD(midThreshold, true)}）</span>
-              </label>
-              <input type="range" min={1} max={10} step={1}
-                value={config.midMinYears}
-                onChange={e => setConfig(c => ({ ...c, midMinYears: Number(e.target.value) }))}
-                className="w-full" />
-              <div className="flex justify-between text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}>
-                <span>1年</span><span>3年（建議）</span><span>10年</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                長期桶最低年數：<strong className="text-main">{config.longMinYears} 年</strong>
-                <span className="ml-2 text-dim">（門檻 = {fmtTWD(longThreshold, true)}）</span>
-              </label>
-              <input type="range" min={5} max={30} step={1}
-                value={config.longMinYears}
-                onChange={e => setConfig(c => ({ ...c, longMinYears: Number(e.target.value) }))}
-                className="w-full" />
-              <div className="flex justify-between text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}>
-                <span>5年</span><span>10年（建議）</span><span>30年</span>
-              </div>
+          <div className="flex items-start gap-2">
+            <Info size={14} className="text-dim shrink-0 mt-0.5" />
+            <div className="text-xs text-dim leading-relaxed">
+              <p className="font-semibold text-main mb-1">如何使用這三條規則？</p>
+              <p>
+                R1、R2、R3 不必同時成立。R2 是自動監控，達到紅色需儘快處理；
+                R1 需你自行關注市場；R3 為定期檢視，配合「再平衡建議」頁一起使用。
+              </p>
             </div>
           </div>
-          <p className="text-dim mt-3" style={{ fontSize: 'var(--font-size-label)' }}>⚡ 設定自動儲存至瀏覽器，下次開啟自動帶入</p>
         </Card>
+
+        {/* 免責 */}
+        <p className="text-[10px] text-faint text-center px-4 leading-relaxed">
+          以上為教育性提醒，實際執行再平衡請考量稅務、手續費與市場情境。App 不提供投資建議。
+        </p>
       </div>
     </div>
   )

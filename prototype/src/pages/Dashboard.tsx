@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  DollarSign, PieChart, Target, ShieldAlert, BarChart3, History,
-  Wallet, TrendingUp, Bell, RefreshCw, ChevronRight, ArrowRight, ChevronDown,
+  ChevronRight, ArrowRight, ChevronDown,
+  Pencil, Check, X, Circle, CheckCircle2, AlertCircle, Compass,
 } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { fmtTWD } from '../components/Layout'
@@ -17,7 +17,7 @@ import {
 } from '../utils/retirementStatus'
 import NextActions from '../components/Dashboard/NextActions'
 import InlineTestMode from '../components/Dashboard/InlineTestMode'
-import ToolGroupCollapsible from '../components/Dashboard/ToolGroupCollapsible'
+import ScenarioSummary from '../components/ScenarioSummary'
 
 // ── QuickSetupCard ──────────────────────────────────────────────
 function QuickSetupCard({ onDone }: { onDone: (age: number, retirementAge: number, assets: number) => void }) {
@@ -215,6 +215,13 @@ function VerdictCard({
   }, [testRetirementAge, data])
 
   const whatIfGap = Math.max(whatIfTargetFund - whatIfAssets, 0)
+
+  // 試算模式下的「達標所需每月存款」
+  const whatIfMonthlyRate = testReturnRate / 100 / 12
+  const whatIfMonths = (testRetirementAge - data.currentAge) * 12
+  const whatIfRequiredSavings = whatIfGap > 0 && whatIfMonthlyRate > 0 && whatIfMonths > 0
+    ? whatIfGap * whatIfMonthlyRate / (Math.pow(1 + whatIfMonthlyRate, whatIfMonths) - 1)
+    : 0
   const whatIfInflatedExpense = useMemo(() => {
     const years = testRetirementAge - data.currentAge
     if (years <= 0) return monthlyRetireExpense
@@ -340,16 +347,6 @@ function VerdictCard({
     behind:  fmtTWD(requiredSavings, true),
   }
 
-  const ctaText: Record<VerdictState, string> = {
-    early:   '查看資產配置建議',
-    ontrack: '查看資產配置建議',
-    gap:     '前往退休目標計算',
-    behind:  '前往退休目標計算',
-  }
-  const ctaTo: Record<VerdictState, string> = {
-    early: '/a3', ontrack: '/a3', gap: '/a1', behind: '/a1',
-  }
-
   // Delta 顯示資訊（方向符號 + 顏色 + 文字）；回傳 null 表示不 render
   const rateDeltaInfo = (() => {
     if (clampedWhatIfRate >= 999) return null // 破版保護
@@ -454,7 +451,7 @@ function VerdictCard({
           <div className="flex items-center gap-4 mb-4">
             <div>
               <p className="text-[10px] text-dim mb-0.5">{bigLabel[state]}</p>
-              <p className={`text-2xl font-bold leading-none ${C.val}`}>{bigValue[state]}</p>
+              <p className={`font-bold leading-none ${C.val}`} style={{ fontSize: 'var(--font-size-display)' }}>{bigValue[state]}</p>
             </div>
             <div className="w-px h-8 bg-gray-200 shrink-0" />
             <div>
@@ -515,6 +512,45 @@ function VerdictCard({
                     : `${fmtTWD(monthlySurplus, true)}/月`}
             </p>
           </div>
+          {/* 儲蓄率 */}
+          {monthlyIncome > 0 && (() => {
+            const curSurplus = isTestMode ? testSurplus : monthlySurplus
+            const curRequired = isTestMode ? whatIfRequiredSavings : requiredSavings
+            const curRate = Math.max(0, curSurplus) / monthlyIncome * 100
+            const reqRate = curRequired / monthlyIncome * 100
+            const onTarget = curRequired === 0  // early / ontrack 狀態
+
+            return (
+              <div className="col-span-2">
+                <p className="text-[10px] text-dim mb-0.5">儲蓄率</p>
+                {onTarget ? (
+                  <p className={`text-sm font-bold ${isTestMode ? 'text-amber-600' : 'text-green-600'}`}>
+                    目前 {curRate.toFixed(1)}%　✓ 已達標
+                  </p>
+                ) : (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`text-sm font-bold ${isTestMode ? 'text-amber-600' : 'text-main'}`}>
+                      目前 {curRate.toFixed(1)}%
+                    </span>
+                    <span className="text-dim text-xs">→ 需要</span>
+                    <span className={`text-sm font-bold ${isTestMode ? 'text-amber-600' : 'text-red-500'}`}>
+                      {reqRate.toFixed(1)}%
+                    </span>
+                    {reqRate > curRate && (
+                      <span className="text-[10px] text-red-600">
+                        ▼ 差 {(reqRate - curRate).toFixed(1)}%
+                      </span>
+                    )}
+                    {reqRate <= curRate && (
+                      <span className="text-[10px] text-green-500">
+                        ▲ 超 {(curRate - reqRate).toFixed(1)}%
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {/* 距退休時間 & 缺口提示（試算模式） */}
@@ -524,10 +560,9 @@ function VerdictCard({
           {isTestMode && whatIfGap === 0 && <span className="text-green-600 ml-2">｜已達標</span>}
         </p>
 
-        {/* 導引小字 + 雙 CTA 並列 */}
-        <p className="text-[10px] text-dim mb-2">想先預覽試算？或直接看行動建議？</p>
+        {/* 試算 CTA 列 */}
         <div className="flex gap-2">
-          {/* 左：試算看看（折疊列觸發）*/}
+          {/* 試算看看（非試算模式：獨占整列；試算模式：左半） */}
           <button
             onClick={() => setTestOpen(o => !o)}
             aria-expanded={testOpen}
@@ -544,21 +579,13 @@ function VerdictCard({
             />
             {isTestMode && !testOpen && <span className="text-amber-500">●</span>}
           </button>
-          {/* 右：isTestMode → 清除試算；否則 → 跳轉建議 */}
-          {isTestMode ? (
+          {/* 試算模式：清除試算 */}
+          {isTestMode && (
             <button
               onClick={() => { resetTest(); setTestOpen(false) }}
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-amber-300 text-amber-600 text-xs font-semibold hover:border-amber-400 hover:bg-amber-50 transition-colors"
             >
               <span>✕ 清除試算</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => navigate(ctaTo[state])}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-blue-600 text-xs font-semibold hover:border-blue-300 transition-colors"
-            >
-              <span>{ctaText[state]}</span>
-              <ArrowRight size={11} />
             </button>
           )}
         </div>
@@ -583,39 +610,183 @@ function VerdictCard({
   )
 }
 
-// ── ToolGroup ─────────────────────────────────────────────────
-function ToolGroup({
-  title, tools,
+// ── ExploreMoreCard ───────────────────────────────────────────
+function ExploreMoreCard() {
+  const navigate = useNavigate()
+  const samples = ['「我每月該存多少？」', '「市場崩了怎辦？」', '「資產怎麼分配？」']
+  return (
+    <button
+      onClick={() => navigate('/planning')}
+      className="w-full text-left rounded-2xl border border-base bg-surface hover:bg-elevated transition-colors p-4 mb-4 group"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+          <Compass size={16} className="text-blue-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-main text-sm">想知道別的？</p>
+          <p className="text-dim text-label mt-0.5">{samples.join(' · ')}</p>
+        </div>
+        <ChevronRight size={14} className="text-faint group-hover:text-blue-600 shrink-0 transition-colors" />
+      </div>
+    </button>
+  )
+}
+
+// ── Dashboard stage helper ────────────────────────────────────
+type DashboardStage = 'pre-setup' | 'awaiting-financials' | 'ready'
+
+function getDashboardStage(currentAge: number, retirementAge: number, salary: number, monthlyExpense: number): DashboardStage {
+  if (currentAge === 0 || retirementAge === 0) return 'pre-setup'
+  if (salary === 0 || monthlyExpense === 0) return 'awaiting-financials'
+  return 'ready'
+}
+
+// ── AgeHeader ─────────────────────────────────────────────────
+function AgeHeader({
+  currentAge,
+  retirementAge,
+  onSave,
 }: {
-  title: string
-  tools: { to: string; label: string; desc: string; icon: React.ElementType; color: string }[]
+  currentAge: number
+  retirementAge: number
+  onSave: (currentAge: number, retirementAge: number) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [ageInput, setAgeInput] = useState(String(currentAge))
+  const [retireInput, setRetireInput] = useState(String(retirementAge))
+
+  function openEdit() {
+    setAgeInput(String(currentAge))
+    setRetireInput(String(retirementAge))
+    setEditing(true)
+  }
+
+  const ageN = parseInt(ageInput) || 0
+  const retireN = parseInt(retireInput) || 0
+  const valid = ageN > 0 && retireN > ageN
+
+  if (!editing) {
+    return (
+      <button
+        onClick={openEdit}
+        className="w-full flex items-center justify-between gap-2 px-4 py-2 mb-3 rounded-xl bg-surface border border-base hover:bg-elevated transition-colors"
+      >
+        <span className="text-main" style={{ fontSize: 'var(--font-size-body)' }}>
+          <strong className="font-semibold">{currentAge}</strong> 歲
+          <span className="text-dim mx-2">·</span>
+          距退休 <strong className="font-semibold">{retirementAge - currentAge}</strong> 年
+        </span>
+        <Pencil size={12} className="text-dim" />
+      </button>
+    )
+  }
+
+  return (
+    <div className="mb-3 p-3 rounded-xl bg-surface border border-base">
+      <div className="grid grid-cols-2 gap-3 mb-2">
+        <div>
+          <label className="block text-label text-dim mb-1">目前年齡</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={ageInput}
+            onChange={e => setAgeInput(e.target.value.replace(/[^\d]/g, ''))}
+            className="w-full bg-white border border-gray-300 text-main rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-label text-dim mb-1">退休年齡</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={retireInput}
+            onChange={e => setRetireInput(e.target.value.replace(/[^\d]/g, ''))}
+            className="w-full bg-white border border-gray-300 text-main rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+      {!valid && (
+        <p className="text-label text-red-600 mb-2">退休年齡須大於目前年齡</p>
+      )}
+      <div className="flex gap-2">
+        <button
+          onClick={() => valid && (onSave(ageN, retireN), setEditing(false))}
+          disabled={!valid}
+          className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            valid ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-elevated text-faint cursor-not-allowed'
+          }`}
+        >
+          <Check size={12} /> 儲存
+        </button>
+        <button
+          onClick={() => setEditing(false)}
+          className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold border border-gray-300 text-dim hover:bg-elevated transition-colors"
+        >
+          <X size={12} /> 取消
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── AwaitingFinancialsCard ────────────────────────────────────
+function AwaitingFinancialsCard({
+  salary,
+  monthlyExpense,
+  investableAssets,
+}: {
+  salary: number
+  monthlyExpense: number
+  investableAssets: number
 }) {
   const navigate = useNavigate()
+
+  const items = [
+    { key: 'salary',   label: '月收入（薪資）', filled: salary > 0,          required: true },
+    { key: 'expense',  label: '月支出',         filled: monthlyExpense > 0,  required: true },
+    { key: 'assets',   label: '現金/投資資產',   filled: investableAssets > 0, required: false },
+  ]
+
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2 mb-2 px-1">
-        <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-faint text-xs shrink-0">{title}</span>
-        <div className="flex-1 h-px bg-gray-200" />
+    <div className="mb-4 rounded-2xl bg-blue-50 border border-blue-200 p-4">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-base">📝</span>
+        <h2 className="font-bold text-main text-sm">還差什麼才能算現況</h2>
       </div>
-      <div className="bg-surface rounded-2xl border border-base overflow-hidden">
-        {tools.map((tool, i) => (
-          <button
-            key={tool.to}
-            onClick={() => navigate(tool.to)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-elevated transition-colors group ${i < tools.length - 1 ? 'border-b border-base' : ''}`}
-          >
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${tool.color}`}>
-              <tool.icon size={13} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <span className="font-semibold text-main" style={{ fontSize: 'var(--font-size-body)' }}>{tool.label}</span>
-              <p className="text-dim truncate" style={{ fontSize: 'var(--font-size-label)' }}>{tool.desc}</p>
-            </div>
-            <ChevronRight size={14} className="text-faint group-hover:text-blue-600 shrink-0 transition-colors" />
-          </button>
-        ))}
-      </div>
+      <p className="text-dim mb-3 text-label">填好月收入與月支出，儀表板就能算出你的達成率與缺口</p>
+
+      <ul className="bg-surface rounded-xl border border-base overflow-hidden mb-3">
+        {items.map((it, i) => {
+          const isLast = i === items.length - 1
+          const Icon = it.filled ? CheckCircle2 : (it.required ? AlertCircle : Circle)
+          const iconClass = it.filled ? 'text-green-600' : (it.required ? 'text-red-600' : 'text-faint')
+          const badge = it.filled
+            ? { text: '已填', cls: 'bg-green-50 text-green-700' }
+            : it.required
+              ? { text: '未填', cls: 'bg-red-50 text-red-700' }
+              : { text: '建議填寫', cls: 'bg-elevated text-dim' }
+          return (
+            <li
+              key={it.key}
+              className={`flex items-center gap-2 px-3 py-2.5 ${isLast ? '' : 'border-b border-base'}`}
+            >
+              <Icon size={16} className={`shrink-0 ${iconClass}`} />
+              <span className="flex-1 text-main text-sm">{it.label}</span>
+              <span className={`text-label font-medium px-2 py-0.5 rounded-full ${badge.cls}`}>
+                {badge.text}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+
+      <button
+        onClick={() => navigate('/s1')}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 shadow-md transition-colors"
+      >
+        去 S1 填寫財務資料 <ArrowRight size={14} />
+      </button>
     </div>
   )
 }
@@ -623,11 +794,11 @@ function ToolGroup({
 // ── Page ──────────────────────────────────────────────────────
 export default function Dashboard() {
   const { data, updateData } = useStore()
-  const isSetupDone = data.currentAge > 0 && data.retirementAge > 0
+  const s = calcSummary(data)
+  const stage = getDashboardStage(data.currentAge, data.retirementAge, data.salary, s.monthlyExpense)
+  const isSetupDone = stage !== 'pre-setup'
   const [previewSetup, setPreviewSetup] = useState(false)
   const showSetup = !isSetupDone || previewSetup
-
-  const s = calcSummary(data)
 
   function handleSetupDone(age: number, retirementAge: number, assets: number) {
     updateData({ currentAge: age, retirementAge: retirementAge, otherAssets: assets })
@@ -671,6 +842,27 @@ export default function Dashboard() {
         </h1>
       </div>
 
+      {/* AgeHeader — 在 awaiting-financials / ready 階段顯示，pre-setup 階段隱藏 */}
+      {!showSetup && (
+        <AgeHeader
+          currentAge={data.currentAge}
+          retirementAge={data.retirementAge}
+          onSave={(a, r) => updateData({ currentAge: a, retirementAge: r })}
+        />
+      )}
+
+      {/* 退休情境摘要（CH1）— 僅 ready 階段顯示 */}
+      {!showSetup && stage === 'ready' && <ScenarioSummary />}
+
+      {/* awaiting-financials 階段：僅顯示待填清單 */}
+      {!showSetup && stage === 'awaiting-financials' && (
+        <AwaitingFinancialsCard
+          salary={data.salary}
+          monthlyExpense={s.monthlyExpense}
+          investableAssets={s.investableAssets}
+        />
+      )}
+
       {/* QuickSetupCard / VerdictCard */}
       {showSetup ? (
         <div>
@@ -686,7 +878,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-      ) : (
+      ) : stage === 'ready' ? (
         <div>
           <VerdictCard
             state={verdictState}
@@ -715,51 +907,21 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* NextActions（已完成初始設定才顯示；試算區已嵌入 VerdictCard 底部） */}
+      {/* NextActions（priority queue 動態推薦） */}
       {!showSetup && (
         <NextActions
-          state={verdictState}
           data={data}
+          monthlyExpense={s.monthlyExpense}
+          totalAssets={s.totalAssets}
           investableAssets={s.investableAssets}
-          monthlySurplus={s.monthlySurplus}
-          requiredSavings={requiredSavings}
-          monthlyExpense={monthlyExpense}
+          achievementRate={achievementRate}
         />
       )}
 
-      {/* 所有工具（預設收合） */}
-      <ToolGroupCollapsible
-        title="所有工具（10 個）"
-        subtitle="財務基礎 / 退休前規劃 / 退休後管理"
-      >
-        <ToolGroup
-          title="財務基礎"
-          tools={[
-            { to: '/s1', label: '財務現況輸入', desc: '輸入資產、收入、支出、負債', icon: DollarSign, color: 'text-blue-600 bg-blue-50' },
-            { to: '/s2', label: '三桶金總覽',   desc: '短、中、長期資產歸桶分析',   icon: PieChart,   color: 'text-purple-600 bg-purple-50' },
-          ]}
-        />
-        <ToolGroup
-          title="退休前規劃"
-          tools={[
-            { to: '/a1', label: '退休目標計算', desc: '每月需存多少才能達標',             icon: Target,      color: 'text-green-600 bg-green-50' },
-            { to: '/a2', label: '退休壓力測試', desc: 'Monte Carlo 模擬退休成功率',       icon: ShieldAlert, color: 'text-red-600 bg-red-50' },
-            { to: '/a3', label: '資產配置建議', desc: '依退休年限給出三桶金比例建議',     icon: BarChart3,   color: 'text-teal-600 bg-teal-50' },
-            { to: '/a4', label: '定期資產追蹤', desc: '記錄每期快照，追蹤退休進度',       icon: History,     color: 'text-gray-500 bg-gray-100' },
-          ]}
-        />
-        <ToolGroup
-          title="退休後管理"
-          tools={[
-            { to: '/b1', label: '提領試算', desc: '三桶金提領順序與資產消耗模擬', icon: Wallet,    color: 'text-sky-600 bg-sky-50' },
-            { to: '/b2', label: '現金流',   desc: '退休後逐年現金流與提領率追蹤', icon: TrendingUp, color: 'text-indigo-600 bg-indigo-50' },
-            { to: '/b3', label: '警戒水位', desc: '資產警戒線設定與通知',         icon: Bell,      color: 'text-orange-600 bg-orange-50' },
-            { to: '/b4', label: '再平衡',   desc: '三桶金再平衡時機與建議操作',   icon: RefreshCw, color: 'text-rose-600 bg-rose-50' },
-          ]}
-        />
-      </ToolGroupCollapsible>
+      {/* 想知道別的？— 引導至規劃 tab */}
+      {!showSetup && stage === 'ready' && <ExploreMoreCard />}
     </div>
   )
 }

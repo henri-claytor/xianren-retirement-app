@@ -67,12 +67,11 @@ export default function C1ContentFeed() {
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`shrink-0 px-3 py-1.5 rounded-full font-medium transition-all ${
+              className={`shrink-0 px-3 py-1.5 rounded-full font-medium transition-all text-label ${
                 activeCategory === cat
                   ? 'bg-blue-600 text-white'
                   : 'bg-elevated text-dim hover:text-main'
               }`}
-              style={{ fontSize: '11px' }}
             >
               {cat}
             </button>
@@ -101,7 +100,7 @@ export default function C1ContentFeed() {
                 <p className="text-white font-medium leading-snug mb-1.5 line-clamp-2" style={{ fontSize: '12px' }}>
                   {article.title}
                 </p>
-                <div className="flex items-center gap-3 text-faint" style={{ fontSize: '10px' }}>
+                <div className="flex items-center gap-3 text-faint text-caption">
                   <span className="flex items-center gap-1"><Clock size={10} />{article.date}</span>
                   <span className="flex items-center gap-1"><Eye size={10} />{article.views}</span>
                   <span>{article.readMins} 分鐘</span>
@@ -117,7 +116,7 @@ export default function C1ContentFeed() {
           </div>
         )}
 
-        <div className="bg-blue-50 rounded-xl p-3 text-blue-700 text-center" style={{ fontSize: '11px' }}>
+        <div className="bg-blue-50 rounded-xl p-3 text-blue-700 text-center text-label">
           📌 更多內容持續更新中，VIP 文章需訂閱解鎖
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import RetirementDiagnosis from './pages/RetirementDiagnosis'
@@ -15,6 +15,9 @@ import B3AlertThresholds from './pages/B3AlertThresholds'
 import B4Rebalancing from './pages/B4Rebalancing'
 import C1ContentFeed from './pages/C1ContentFeed'
 import C2CommunityFeed from './pages/C2CommunityFeed'
+import Planning from './pages/Planning'
+import Me from './pages/Me'
+import MeAllTools from './pages/MeAllTools'
 
 export default function App() {
   return (
@@ -23,6 +26,10 @@ export default function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="diagnosis" element={<RetirementDiagnosis />} />
+          <Route path="planning" element={<Planning />} />
+          <Route path="me" element={<Me />} />
+          <Route path="me/all-tools" element={<MeAllTools />} />
+          <Route path="me/snapshots" element={<Navigate to="/a4" replace />} />
           <Route path="s1" element={<S1FinancialInput />} />
           <Route path="s2" element={<S2BucketOverview />} />
           <Route path="s3" element={<S3InflationSimulator />} />

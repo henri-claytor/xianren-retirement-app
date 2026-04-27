@@ -49,6 +49,14 @@ export interface FinancialSnapshot {
     stdDev: number
     runAt: string
   } | null
+
+  // 風險屬性（來自 A3 一鍵三選，非問卷）
+  riskProfile: 'conservative' | 'balanced' | 'aggressive' | null
+
+  // ── NextActions 狀態追蹤（question-led-planning-tab） ──
+  visitedTools: string[]            // 訪問過的工具 id 清單（s1/s2/.../b4）
+  lastSnapshotAt: number | null     // 最近一次快照時間（epoch ms）
+  dismissedActions: string[]        // 「不再提醒」的 action id 清單
 }
 
 export interface StockHolding {
@@ -106,6 +114,7 @@ export interface Liability {
   name: string
   monthlyPayment: number
   remainingMonths: number
+  kind?: 'mortgage' | 'other'  // 區分房貸與其他負債，UI 可獨立標示
 }
 
 export interface Snapshot {
@@ -120,7 +129,7 @@ export interface Snapshot {
   longBucket: number
 }
 
-export type BucketType = 'short' | 'mid' | 'long' | 'self-use'
+export type BucketType = 'short' | 'mid' | 'long'
 
 export interface BucketItem {
   id: string

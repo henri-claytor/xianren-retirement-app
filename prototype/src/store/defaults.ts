@@ -33,7 +33,6 @@ export const DEFAULT_SNAPSHOT: FinancialSnapshot = {
   laborRetirementFund: 8000,
 
   essentialExpenses: [
-    { id: 'e1', name: '房租/房貸', amount: 20000 },
     { id: 'e2', name: '飲食', amount: 15000 },
     { id: 'e3', name: '交通', amount: 5000 },
     { id: 'e4', name: '保險', amount: 8000 },
@@ -49,11 +48,16 @@ export const DEFAULT_SNAPSHOT: FinancialSnapshot = {
   ],
 
   liabilities: [
-    { id: 'lb1', name: '房貸', monthlyPayment: 20000, remainingMonths: 120 },
+    { id: 'lb1', name: '房貸', monthlyPayment: 20000, remainingMonths: 120, kind: 'mortgage' },
   ],
 
   inflationRate: 2,
   investmentReturn: 5,
 
   stressTestResult: null,
+  riskProfile: null,
+
+  visitedTools: [],
+  lastSnapshotAt: null,
+  dismissedActions: [],
 }

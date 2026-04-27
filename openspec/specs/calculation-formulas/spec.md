@@ -1,8 +1,8 @@
 # Calculation Formulas Spec
 
-**最後更新**：2026-04-21  
-**版本**：1.2  
-**對應程式碼**：`prototype/src/pages/`, `prototype/src/store/useStore.ts`, `prototype/src/utils/retirementStatus.ts`
+**最後更新**：2026-04-23  
+**版本**：1.7  
+**對應程式碼**：`prototype/src/pages/`, `prototype/src/store/useStore.ts`, `prototype/src/utils/retirementStatus.ts`, `prototype/src/components/RiskProfileSelector.tsx`, `prototype/src/components/ScenarioSummary.tsx`
 
 ---
 
@@ -44,10 +44,11 @@ verdictState 判斷優先序：
 
 短桶 = 現金 + 定存 + override 為 short 的持倉
 中桶 = 儲蓄險 + 債券比≥55% 的 ETF/基金 + override 為 mid 的持倉
-長桶 = 租賃房產 + 其他資產 + 股票 + 債券比<55% 的 ETF/基金 + override 為 long 的持倉
+長桶 = 其他資產 + 股票 + 債券比<55% 的 ETF/基金 + override 為 long 的持倉
+     （注：自住與出租房屋皆不進入三桶金，詳見「房屋資產處理原則」段落）
 
 總資產       = 現金 + 定存 + 儲蓄險 + 自住房產 + 租賃房產 + 股票 + ETF + 基金 + 其他資產
-可投資資產   = 總資產 - 自住房產
+可投資資產   = 總資產 - 自住房產 - 租賃房產
 
 月必要支出   = sum(essentialExpenses)
 月生活支出   = sum(lifestyleExpenses)
@@ -59,7 +60,70 @@ verdictState 判斷優先序：
 生活支出比   = 月生活支出 / 月總支出 × 100%
 ```
 
-### utils/retirementStatus.ts
+---
+
+## 房屋資產處理原則（clarify-house-asset-treatment）
+
+核心假設：**房屋只能擁有、不會賣**。自住與出租房屋皆不參與投資增值、不可提領、不進入三桶金。
+
+### 資產端
+
+| 類別 | 顯示於「總資產」 | 進入「可投資資產」 | 進入三桶金 | 參與 A1/A2/B1–B4 計算 |
+|---|---|---|---|---|
+| 自住房屋 `realEstateSelfUse` | ✅ | ❌ | ❌ | ❌ |
+| 出租房屋 `realEstateRental` | ✅ | ❌ | ❌ | ❌ |
+
+```
+總資產        = 現金 + 定存 + 儲蓄險 + 自住 + 出租 + 股票 + ETF + 基金 + 其他資產
+可投資資產    = 總資產 - 自住 - 出租
+```
+
+所有 A1 達成率、A2 Monte Carlo、B1–B4 提領計算皆使用「可投資資產」作為初始資產，房屋不參與複利。
+
+### 現金流端
+
+**出租房屋**：僅以「月租金現金流」形式計入 B2 穩定現金流覆蓋率。租金隨通膨逐年調整：
+
+```
+rentalIncomeAtAge(age) = rentalIncome × (1 + 通膨率/100)^(age - currentAge)
+```
+
+**房貸**：透過既有 `liabilities` 陣列建模（`kind: 'mortgage'`）。`effectiveMonthlyExpense(age, data)` 於剩餘月數用盡後自動從月支出扣除：
+
+```
+yearsFromNow   = max(0, age - currentAge)
+monthsFromNow  = yearsFromNow × 12
+activeLiab     = sum( l.monthlyPayment for l in liabilities if l.remainingMonths > monthsFromNow )
+activeTrans    = sum( t.amount for t in transitional if t.startAge ≤ age ≤ t.endAge )
+effectiveMonthlyExpense(age) = essential + lifestyle + activeLiab + activeTrans
+```
+
+B2 覆蓋率計算的分母使用 `effectiveMonthlyExpense(age) × (1 + 通膨率/100)^(age - currentAge)`。
+
+### 顯示端
+
+**房屋市值逐年顯示套通膨**（純顯示，不影響計算）：
+
+```
+housingValueAtAge(age, baseValue) = baseValue × (1 + 通膨率/100)^(age - currentAge)
+```
+
+`utils/housingValue.ts` 提供此函式，可用於 Dashboard、A4 追蹤頁等位置顯示「今年自住房屋約值 XX 萬」。
+
+### UI 顯示分層（全站一致）
+
+| 頁面 | 呈現方式 |
+|---|---|
+| Dashboard / S1 | 「總資產 XX 萬（含房屋 XX 萬）」與「可投資資產 XX 萬（不含房屋）」並列 |
+| A1 / A2 | 資產卡明確標示「不含房屋」，註明「房屋 XX 萬不納入成長模擬」 |
+| S2 | 三桶金與「房屋資產」獨立區塊分開；房屋區標籤「資產負債表項目，不進入提領」 |
+| B2 | 穩定覆蓋率區塊底部加灰字「自住不賣、不計入現金流；出租僅以租金計入」 |
+
+### BucketType 精簡
+
+`BucketType = 'short' | 'mid' | 'long'`。移除未實作的 `'self-use'` 以避免維護者誤用。
+
+## utils/retirementStatus.ts
 
 ```
 距退休年數   = 退休年齡 - 目前年齡
@@ -107,6 +171,25 @@ return null（80 歲前無法達標）
 
 ---
 
+## Dashboard 情境摘要（ScenarioSummary.tsx）
+
+依 S1 資料自動生成退休情境敘述，分三種措辭：
+
+```
+距退休年數 = 退休年齡 - 目前年齡
+
+if 距退休年數 < 5  → 措辭：「即將在 X 年後退休」（近期，強調最後衝刺）
+if 5 ≤ 距退休年數 ≤ 15 → 措辭：「距離退休還 X 年」（中期，強調累積）
+if 距退休年數 > 15 → 措辭：「還有 X 年的準備期」（遠期，強調長期複利）
+
+若 S1 資料不足（月必要支出 = 0 或 退休年齡未設）
+  → 顯示 CTA「填寫財務現況」導向 S1
+```
+
+編輯 Accordion：點鉛筆 icon 可直接修改 `retirementAge` 與 `essentialExpenses[0].amount`，同步寫回 `useFinanceStore`。
+
+---
+
 ## S1 財務現況輸入（S1FinancialInput.tsx）
 
 ```
@@ -141,6 +224,20 @@ ETF 損益    = 同上
 | > 5% | 🟢 正常 |
 | 0~5% | 🟡 注意 |
 | ≤ 0% | 🔴 警戒 |
+
+### 動態建議比例（course-alignment-ch1-ch4）
+
+S2 與 A3 共用「依距退休年數」的建議比例表（見 A3 lifecycle 表），取代早期固定 10/30/60。
+
+### 短桶警戒連動 B3 R2
+
+```
+短桶可撐月數 = 短桶金額 / 月總支出
+
+if 短桶可撐月數 < R2 門檻（預設 6）
+  → S2 短桶卡片顯示紅色警戒條「短桶不足，查看規則 →」
+  → 點擊導向 /b3（R2 規則）
+```
 
 ---
 
@@ -213,7 +310,45 @@ Monte Carlo 模擬（預設 1,000 次）：
 | 長壽風險 | 退休年數 +10 年 |
 | 超支 | 年支出 × 1.2 |
 
-百分位軌跡：75th / 50th / 25th / 5th percentile
+百分位軌跡：**逐年百分位（envelope）**，75th / 50th / 25th / 5th
+
+```
+# 避免「樣本軌跡法」在低成功率下 PR 線視覺交錯
+# 改以每個年齡切片後在所有模擬中取百分位，得到四條嚴格單調的 envelope
+for 每個 y in [0, retirementYears]:
+  slice = 所有模擬在年度 y 的資產值（破產後補 0）
+  slice 升冪排序
+  PR75[y] = slice[floor(0.75 × N)]
+  PR50[y] = slice[floor(0.50 × N)]
+  PR25[y] = slice[floor(0.25 × N)]
+  PR5[y]  = slice[floor(0.05 × N)]
+
+保證：在任何年齡 y，PR5[y] ≤ PR25[y] ≤ PR50[y] ≤ PR75[y]
+
+破產時點（顯示於圖表）：
+  bankruptAge.pr25 = PR25 envelope 首次觸 0 的歲數
+  bankruptAge.pr5  = PR5  envelope 首次觸 0 的歲數
+```
+
+### 三風險分項敏感度（course-alignment-ch1-ch4）
+
+成功率總結下方顯示三張敏感度卡片，各自以擾動參數重跑 Monte Carlo（每次 300 次以節省運算）：
+
+```
+基準成功率        = runMonteCarlo(baseParams, 300).successRate
+
+通膨敏感度成功率  = runMonteCarlo(inflationRate + 1, ...).successRate
+長壽敏感度成功率  = runMonteCarlo(..., totalYears + 5).successRate
+醫療支出敏感度    = runMonteCarlo(..., annualExpense × 1.2).successRate
+
+Δ 通膨   = 通膨敏感度   - 基準
+Δ 長壽   = 長壽敏感度   - 基準
+Δ 醫療   = 醫療敏感度   - 基準
+
+最需留意 = argmin(Δ 通膨, Δ 長壽, Δ 醫療) → 該卡片加紅框 + 「最需留意」標籤
+```
+
+備註：單因子敏感度，頁尾附免責說明「此為單因子，實際風險會交互作用」。
 
 ---
 
@@ -242,6 +377,22 @@ Monte Carlo 模擬（預設 1,000 次）：
 | 2~8% | 🟡 輕微 |
 | 8~15% | 🟡 中度 |
 | > 15% | 🔴 嚴重 |
+
+### 風險屬性 Preset（course-alignment-ch1-ch4）
+
+使用者於 `RiskProfileSelector` 一鍵選擇風險屬性後，寫入 `riskProfile` 並覆蓋三桶金建議比例：
+
+| riskProfile | 短桶 | 中桶 | 長桶 | 情境 |
+|-------------|------|------|------|------|
+| conservative（保守） | 20% | 40% | 40% | 偏重現金與穩定收益 |
+| balanced（穩健） | 15% | 35% | 50% | 兼顧成長與防禦 |
+| aggressive（積極） | 5% | 15% | 80% | 長期成長導向 |
+
+規則：
+```
+if riskProfile ≠ null → 建議比例 = RISK_PRESETS[riskProfile]
+else                  → 建議比例 = 依距退休年數表（上方 lifecycle 表）
+```
 
 ---
 
@@ -288,25 +439,65 @@ Monte Carlo 模擬（預設 1,000 次）：
 
 高提領率警示：提領率 > 4%
 
+### 穩定現金流覆蓋率（b2-stable-cashflow-coverage）
+
+回答「就算投資歸零，穩定收入能撐幾成生活」的關鍵指標。穩定收入 = 勞保年金 + 勞退月領 + 租金收入（各自判斷請領年齡）。
+
+```
+各年覆蓋率 = 當年穩定收入 / 當年通膨後月總支出 × 100%
+  穩定收入_月 = (age ≥ 勞保請領 ? 勞保年金 : 0)
+              + (age ≥ 勞退請領 ? 勞退月領 : 0)
+              + 租金收入
+  支出_月     = 月總支出 × (1 + 通膨率/100)^(age − 目前年齡)
+  備註：分母套通膨、分子採名目固定（凸顯晚年購買力衰退）
+
+最低覆蓋率    = min(各年覆蓋率)，標示對應年齡區間
+平均覆蓋率    = avg(各年覆蓋率)
+全齡穩定覆蓋率 = avg(age ≥ max(勞保請領, 勞退請領) 各年覆蓋率)
+
+顏色分級：
+  ≥ 100% 🔵 完全涵蓋   60–100% 🟢 健康
+  30–60% 🟡 部分覆蓋   < 30%   🔴 不足
+```
+
+三階段識別：
+```
+pensionStart = min(勞保請領年齡, 勞退請領年齡)
+allStart     = max(勞保請領年齡, 勞退請領年齡)
+
+if 退休年齡 < pensionStart → 空窗期 / 勞退勞保期 / 全領期（三段）
+elif 退休年齡 < allStart   → 勞退勞保期 / 全領期（兩段）
+else                       → 全領期（一段）
+```
+
 ---
 
-## B3 警戒水位（B3AlertThresholds.tsx）
+## B3 再平衡規則（B3AlertThresholds.tsx，改寫自 course-alignment-ch1-ch4）
 
+三條觸發規則：
+
+### R1 市場跌幅（人工判斷）
 ```
-短桶門檻 = 月總支出 × N 個月（預設 6）
-中桶門檻 = 月總支出 × 12 × N 年（預設 3）
-長桶門檻 = 月總支出 × 12 × N 年（預設 10）
-
-覆蓋率   = 現值 / 門檻
-缺口金額 = max(門檻 - 現值, 0)
+觸發條件：主要指數跌幅 > 20%
+動作：提示人工檢視，是否從長桶買入
 ```
 
-警示狀態：
-| 覆蓋率 | 狀態 |
-|-------|------|
-| ≥ 120% | 🟢 充足 |
-| 100~120% | 🟡 注意 |
-| < 100% | 🔴 警戒 |
+### R2 短桶警戒（自動計算）
+```
+短桶可撐月數 = 短桶金額 / 月總支出
+
+if 短桶可撐月數 < 門檻        → 🔴 警戒
+if 門檻 ≤ 可撐月數 < 門檻+3   → 🟡 注意
+else                          → 🟢 健康
+
+門檻（shortMinMonths）預設 6 個月，可透過滑桿調整並寫入 localStorage
+```
+
+### R3 年度定期（依月份提示）
+```
+觸發月份：每年 1 月（可於規則卡調整）
+動作：年度資產配置檢視，重新套用建議比例
+```
 
 ---
 
@@ -331,3 +522,8 @@ Monte Carlo 模擬（預設 1,000 次）：
 | 2026-04-20 | 1.1 | 新增 calcEarliestRetirementAge、Dashboard 判斷狀態邏輯（dashboard-verdict） |
 | — | — | A1 反推模式上線後更新（reverse-retirement-planner） |
 | 2026-04-21 | 1.2 | 達成率公式加入月結餘年金終值項（add-monthly-savings-to-achievement）；calcAchievementRate / calcEarliestRetirementAge / A1 calcForAge 函式簽名擴充 monthlySurplus |
+| 2026-04-22 | 1.3 | 新增儀表板「下一步行動卡」與「快速試算滑桿」計算；文件全面中文化，供課程作者校對 |
+| 2026-04-23 | 1.4 | course-alignment-ch1-ch4：新增 Dashboard 情境摘要三措辭分支、A2 三風險分項敏感度（通膨+1%/長壽+5y/醫療×1.2，各 300 次）、A3 風險屬性 Preset（保守/穩健/積極→三桶比例）、S2 短桶警戒連動 B3 R2、B3 改寫為再平衡規則（R1 市場跌幅 / R2 短桶警戒 / R3 年度定期）|
+| 2026-04-23 | 1.5 | b2-stable-cashflow-coverage：B2 新增穩定現金流覆蓋率（最低/平均/全齡穩定三個數字）、三階段識別（空窗期/勞退勞保期/全領期）、四段顏色分級（<30%/30-60%/60-100%/≥100%）、分母通膨分子名目的刻意設計 |
+| 2026-04-23 | 1.6 | fix-a2-trajectory-ordering：A2 Monte Carlo 改用「逐年百分位 envelope」繪製 PR 線，解決低成功率下 PR 線交錯問題；新增破產時點標記（PR25/PR5 首次觸零歲數）；Monte Carlo 抽離為 `utils/monteCarlo.ts` |
+| 2026-04-23 | 1.7 | clarify-house-asset-treatment：房屋資產處理原則正式入檔——自住與出租皆不進入三桶金與可投資資產；出租僅以月租金現金流形式計入 B2（租金隨通膨）；房貸透過 liabilities.kind='mortgage' 建模，到期自動從 effectiveMonthlyExpense 扣除；新增 utils/effectiveExpense.ts、utils/housingValue.ts；BucketType 移除 'self-use' |

@@ -59,6 +59,8 @@
 @utility text-main   { color: var(--color-text-primary); }
 @utility text-dim    { color: var(--color-text-muted); }
 @utility text-faint  { color: var(--color-text-disabled); }
+@utility text-label   { font-size: var(--font-size-label); }
+@utility text-caption { font-size: var(--font-size-caption); }
 
 body {
   margin: 0;
@@ -73,7 +75,7 @@ body {
 }
 
 input[type="range"] {
-  accent-color: #D97706;
+  accent-color: var(--color-warning);
 }
 
 /* Hide scrollbar but keep scrollable */

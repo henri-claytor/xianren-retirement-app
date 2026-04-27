@@ -72,6 +72,9 @@ export function useStore() {
     }
     _snapshots = [snapshot, ..._snapshots]
     localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(_snapshots))
+    // 同步更新 lastSnapshotAt（NextActions 用）
+    _data = { ..._data, lastSnapshotAt: Date.now() }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(_data))
     notify()
   }, [])
 
@@ -81,7 +84,21 @@ export function useStore() {
     notify()
   }, [])
 
-  return { data: _data, updateData, resetData, snapshots: _snapshots, addSnapshot, saveStressTestResult }
+  const markToolVisited = useCallback((toolId: string) => {
+    if (_data.visitedTools.includes(toolId)) return
+    _data = { ..._data, visitedTools: [..._data.visitedTools, toolId] }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(_data))
+    notify()
+  }, [])
+
+  const dismissAction = useCallback((actionId: string) => {
+    if (_data.dismissedActions.includes(actionId)) return
+    _data = { ..._data, dismissedActions: [..._data.dismissedActions, actionId] }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(_data))
+    notify()
+  }, [])
+
+  return { data: _data, updateData, resetData, snapshots: _snapshots, addSnapshot, saveStressTestResult, markToolVisited, dismissAction }
 }
 
 export function calcSummary(data: FinancialSnapshot) {
@@ -90,9 +107,10 @@ export function calcSummary(data: FinancialSnapshot) {
   const overrides = data.bucketOverrides ?? {}
 
   // 三桶金歸桶（含手動覆蓋）
+  // 注：自住與出租房屋皆不進入三桶金 — 房屋不賣，出租以租金現金流形式獨立處理
   let shortBucket = data.cash + data.fixedDeposit
   let midBucket = data.savingsInsurance
-  let longBucket = data.realEstateRental + data.otherAssets
+  let longBucket = data.otherAssets
 
   // 個股市值（依覆蓋歸桶，預設長期桶）
   let stockValue = 0
@@ -132,7 +150,8 @@ export function calcSummary(data: FinancialSnapshot) {
     data.realEstateSelfUse + data.realEstateRental +
     stockValue + etfValue + fundValue + data.otherAssets
 
-  const investableAssets = totalAssets - data.realEstateSelfUse
+  // 可投資資產：排除自住與出租房屋（兩者皆不參與投資增值、不可提領）
+  const investableAssets = totalAssets - data.realEstateSelfUse - data.realEstateRental
 
   // 月收支
   const monthlyEssential = data.essentialExpenses.reduce((s, e) => s + e.amount, 0)

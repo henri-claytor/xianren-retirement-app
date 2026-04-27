@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts'
-import { PieChart as PieIcon, ChevronDown, ChevronUp, AlertTriangle, Info } from 'lucide-react'
+import { PieChart as PieIcon, ChevronDown, ChevronUp, AlertTriangle, Info, ArrowRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useStore, calcSummary } from '../store/useStore'
 import { PageHeader, Card, fmtTWD } from '../components/Layout'
+import CourseBadge from '../components/CourseBadge'
+import { useMarkVisited } from '../hooks/useMarkVisited'
 
 // 生命週期配置建議（與 A3 相同邏輯）
 function getSuggestedAllocation(yearsToRetire: number) {
@@ -55,6 +58,9 @@ function HealthBadge({ ratio, target }: { ratio: number; target: string }) {
 }
 
 export default function S2BucketOverview() {
+  useMarkVisited('s2')
+
+  const navigate = useNavigate()
   const { data, updateData } = useStore()
   const s = calcSummary(data)
   const [expandedBucket, setExpandedBucket] = useState<string | null>('short')
@@ -85,7 +91,7 @@ export default function S2BucketOverview() {
     { id: 'cash', name: '現金/活存', value: data.cash, defaultBucket: 'short' as BucketKey, reason: '流動性最高', bondRatioMissing: false, overrideable: false },
     { id: 'fixedDeposit', name: '定存', value: data.fixedDeposit, defaultBucket: 'short' as BucketKey, reason: '短期固定收益', bondRatioMissing: false, overrideable: false },
     { id: 'savingsInsurance', name: '儲蓄險', value: data.savingsInsurance, defaultBucket: 'mid' as BucketKey, reason: '中期固定收益', bondRatioMissing: false, overrideable: false },
-    ...(data.realEstateRental > 0 ? [{ id: 'rental', name: '不動產出租', value: data.realEstateRental, defaultBucket: 'long' as BucketKey, reason: '出租收益型資產', bondRatioMissing: false, overrideable: false }] : []),
+    // 出租房屋從三桶金移除：僅以租金現金流形式獨立處理（house-asset-treatment D1）
     ...(data.otherAssets > 0 ? [{ id: 'other', name: '其他資產', value: data.otherAssets, defaultBucket: 'long' as BucketKey, reason: '歸入長期桶', bondRatioMissing: false, overrideable: false }] : []),
     ...data.stocks.map(s => ({
       id: s.id,
@@ -158,19 +164,38 @@ export default function S2BucketOverview() {
       <PageHeader title="三桶金總覽" subtitle="依資產類型自動歸桶，分析短中長期資產結構" icon={PieIcon} />
 
       <div className="px-4 py-2 space-y-3">
-        {/* 短期桶不足警示 */}
+        {/* 短期桶不足警示（紅色警戒，連結到 B3 R2 規則） */}
         {shortDeficit > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-            <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-amber-200">短期桶不足</p>
-              <p className="text-xs text-amber-300 mt-0.5">
+          <button
+            onClick={() => navigate('/b3')}
+            className="w-full text-left bg-red-500/10 border-2 border-red-500/50 rounded-xl p-4 flex items-start gap-3 hover:bg-red-500/15 transition-colors"
+          >
+            <AlertTriangle size={18} className="text-red-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-red-700">短桶不足（觸發 R2 警戒）</p>
+                <CourseBadge ch="CH4" />
+              </div>
+              <p className="text-xs text-red-700/80 mt-0.5">
                 建議保留 6 個月支出（{fmtTWD(shortNeeded, true)}），目前短期桶 {fmtTWD(s.shortBucket, true)}，
                 建議補充 <span className="font-semibold">{fmtTWD(shortDeficit, true)}</span>
               </p>
+              <p className="text-[11px] text-red-600 mt-1 flex items-center gap-1">
+                查看再平衡規則 <ArrowRight size={11} />
+              </p>
             </div>
-          </div>
+          </button>
         )}
+
+        {/* B3 再平衡規則連結（始終顯示） */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => navigate('/b3')}
+            className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          >
+            查看再平衡規則 <ArrowRight size={12} />
+          </button>
+        </div>
 
         {/* 三桶金概覽 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -181,37 +206,53 @@ export default function S2BucketOverview() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cfg.color }} />
-                    <span className="font-semibold text-[#E0E0E0] text-sm">{cfg.label}</span>
+                    <span className="font-semibold text-main text-sm">{cfg.label}</span>
                   </div>
                   <HealthBadge ratio={bucket.ratio} target={cfg.target} />
                 </div>
                 <p className="font-bold text-main mb-0.5" style={{ fontSize: '18px' }}>{fmtTWD(bucket.value, true)}</p>
-                <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>{cfg.desc}</p>
+                <p className="text-dim text-label">{cfg.desc}</p>
                 <div className="mt-3 h-1.5 bg-elevated rounded-full overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${Math.min(bucket.ratio, 100)}%`, backgroundColor: cfg.color }} />
                 </div>
-                <p className="text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}>{bucket.ratio.toFixed(1)}% 可投資資產</p>
+                <p className="text-dim mt-1 text-label">{bucket.ratio.toFixed(1)}% 可投資資產</p>
               </Card>
             )
           })}
         </div>
 
-        {/* 不動產自住（獨立呈現） */}
-        {data.realEstateSelfUse > 0 && (
+        {/* 房屋資產（自住 + 出租，獨立呈現） */}
+        {(data.realEstateSelfUse > 0 || data.realEstateRental > 0) && (
           <div className="bg-elevated border border-base rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-semibold text-main">🏠 不動產自住</span>
-              <span className="px-2 py-0.5 bg-elevated rounded-full text-dim" style={{ fontSize: 'var(--font-size-label)' }}>獨立呈現，不計入三桶</span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm font-semibold text-main">🏠 房屋資產</span>
+              <span className="px-2 py-0.5 bg-elevated rounded-full text-dim text-label">資產負債表項目，不進入提領</span>
             </div>
-            <p className="font-bold text-[#E0E0E0]" style={{ fontSize: '16px' }}>{fmtTWD(data.realEstateSelfUse, true)}</p>
-            <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>自住房產不計入可投資資產計算</p>
+            <div className="grid grid-cols-2 gap-3">
+              {data.realEstateSelfUse > 0 && (
+                <div>
+                  <p className="text-dim text-label">自住</p>
+                  <p className="font-bold text-main" style={{ fontSize: '16px' }}>{fmtTWD(data.realEstateSelfUse, true)}</p>
+                </div>
+              )}
+              {data.realEstateRental > 0 && (
+                <div>
+                  <p className="text-dim text-label">出租</p>
+                  <p className="font-bold text-main" style={{ fontSize: '16px' }}>{fmtTWD(data.realEstateRental, true)}</p>
+                  <p className="text-[10px] text-dim mt-0.5">以月租金 {fmtTWD(data.rentalIncome, false)} 計入穩定現金流</p>
+                </div>
+              )}
+            </div>
+            <p className="text-[10px] text-dim mt-2 leading-relaxed">
+              自住房屋不賣、不增值；出租房屋僅以租金現金流形式納入 B2 覆蓋率計算，兩者皆不參與投資成長。
+            </p>
           </div>
         )}
 
         {/* 圖表 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-3">
-            <h3 className="text-sm font-semibold text-[#E0E0E0] mb-3">資產分布圓餅圖</h3>
+            <h3 className="text-sm font-semibold text-main mb-3">資產分布圓餅圖</h3>
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="50%" outerRadius={90} dataKey="value"
@@ -222,7 +263,7 @@ export default function S2BucketOverview() {
                 </Pie>
                 <Tooltip
                   formatter={(v: any) => fmtTWD(Number(v), true)}
-                  contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+                  contentStyle={{ background: '#FFFFFF', border: '1px solid #C6C6C8', color: '#1C1C1E' }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -232,8 +273,8 @@ export default function S2BucketOverview() {
             {/* 標題列 + 查看說明按鈕 */}
             <div className="flex items-center justify-between mb-1">
               <div>
-                <h3 className="text-sm font-semibold text-[#E0E0E0]">目前 vs 建議比例</h3>
-                <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>
+                <h3 className="text-sm font-semibold text-main">目前 vs 建議比例</h3>
+                <p className="text-dim mt-0.5 text-label">
                   {suggested.label}・建議 {suggested.short}/{suggested.mid}/{suggested.long}
                 </p>
               </div>
@@ -241,7 +282,7 @@ export default function S2BucketOverview() {
                 onClick={() => setShowAllocationInfo(v => !v)}
                 className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${
                   showAllocationInfo
-                    ? 'bg-blue-900/40 text-blue-300 border border-blue-700/50'
+                    ? 'bg-blue-100 text-blue-700 border border-blue-300'
                     : 'bg-elevated text-dim hover:text-main border border-base'
                 }`}
               >
@@ -254,13 +295,13 @@ export default function S2BucketOverview() {
             <div className={`overflow-hidden transition-all duration-300 ${showAllocationInfo ? 'max-h-96 opacity-100 mb-3' : 'max-h-0 opacity-0'}`}>
               <div className="bg-elevated border border-base rounded-xl p-3 mt-2">
                 <p className="text-xs font-semibold text-dim mb-2">建議比例依距退休年數調整</p>
-                <table className="w-full" style={{ fontSize: 'var(--font-size-label)' }}>
+                <table className="w-full text-label">
                   <thead>
                     <tr className="text-dim border-b border-base">
                       <th className="text-left pb-1.5 font-medium">距退休</th>
                       <th className="text-center pb-1.5 font-medium text-blue-600">短期</th>
                       <th className="text-center pb-1.5 font-medium text-purple-600">中期</th>
-                      <th className="text-center pb-1.5 font-medium text-orange-400">長期</th>
+                      <th className="text-center pb-1.5 font-medium text-orange-600">長期</th>
                       <th className="text-left pb-1.5 font-medium">階段</th>
                     </tr>
                   </thead>
@@ -272,14 +313,14 @@ export default function S2BucketOverview() {
                           key={stage.range}
                           className={`border-b border-base last:border-0 ${isCurrent ? 'bg-blue-50' : ''}`}
                         >
-                          <td className={`py-1.5 pr-2 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-dim'}`}>
+                          <td className={`py-1.5 pr-2 ${isCurrent ? 'text-blue-700 font-semibold' : 'text-dim'}`}>
                             {stage.range}
                             {isCurrent && <span className="ml-1 text-blue-600">◀</span>}
                           </td>
-                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-main'}`}>{stage.short}%</td>
-                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-main'}`}>{stage.mid}%</td>
-                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-main'}`}>{stage.long}%</td>
-                          <td className={`py-1.5 pl-2 ${isCurrent ? 'text-blue-300 font-semibold' : 'text-dim'}`}>{stage.label}</td>
+                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-700 font-semibold' : 'text-main'}`}>{stage.short}%</td>
+                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-700 font-semibold' : 'text-main'}`}>{stage.mid}%</td>
+                          <td className={`text-center py-1.5 ${isCurrent ? 'text-blue-700 font-semibold' : 'text-main'}`}>{stage.long}%</td>
+                          <td className={`py-1.5 pl-2 ${isCurrent ? 'text-blue-700 font-semibold' : 'text-dim'}`}>{stage.label}</td>
                         </tr>
                       )
                     })}
@@ -290,27 +331,27 @@ export default function S2BucketOverview() {
 
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={barData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-                <XAxis type="number" tickFormatter={v => `${v}%`} tick={{ fill: '#A0A0A0', fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" width={60} tick={{ fill: '#A0A0A0' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E5EA" />
+                <XAxis type="number" tickFormatter={v => `${v}%`} tick={{ fill: '#6C6C70', fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" width={60} tick={{ fill: '#6C6C70' }} />
                 <Tooltip
                   formatter={(v: any) => `${Number(v).toFixed(1)}%`}
-                  contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+                  contentStyle={{ background: '#FFFFFF', border: '1px solid #C6C6C8', color: '#1C1C1E' }}
                 />
-                <Legend wrapperStyle={{ color: '#D4D4D4' }} />
+                <Legend wrapperStyle={{ color: '#3C3C43' }} />
                 <Bar dataKey="短期桶" fill="#3b82f6" stackId="a" />
                 <Bar dataKey="中期桶" fill="#8b5cf6" stackId="a" />
                 <Bar dataKey="長期桶" fill="#f97316" stackId="a" />
               </BarChart>
             </ResponsiveContainer>
-            <p className="text-dim mt-2 text-center" style={{ fontSize: 'var(--font-size-label)' }}>建議比例依您的退休階段自動調整，僅供參考</p>
+            <p className="text-dim mt-2 text-center text-label">建議比例依您的退休階段自動調整，僅供參考</p>
           </Card>
         </div>
 
         {/* 持倉明細 */}
         <Card className="p-3">
-          <h3 className="text-sm font-semibold text-[#E0E0E0] mb-1">持倉明細（點擊展開）</h3>
-          <p className="text-dim mb-3" style={{ fontSize: 'var(--font-size-label)' }}>可點擊短|中|長按鈕手動調整歸桶</p>
+          <h3 className="text-sm font-semibold text-main mb-1">持倉明細（點擊展開）</h3>
+          <p className="text-dim mb-3 text-label">可點擊短|中|長按鈕手動調整歸桶</p>
           <div className="space-y-3">
             {bucketsData.map(bucket => {
               const cfg = BUCKET_CONFIG[bucket.key]
@@ -323,11 +364,11 @@ export default function S2BucketOverview() {
                   >
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.color }} />
-                      <span className="text-sm font-semibold text-[#E0E0E0]">{cfg.label}</span>
-                      <span className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>{bucket.items.length} 項</span>
+                      <span className="text-sm font-semibold text-main">{cfg.label}</span>
+                      <span className="text-dim text-label">{bucket.items.length} 項</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-[#E0E0E0]">{fmtTWD(bucket.value, true)}</span>
+                      <span className="text-sm font-bold text-main">{fmtTWD(bucket.value, true)}</span>
                       {isExpanded ? <ChevronUp size={16} className="text-dim" /> : <ChevronDown size={16} className="text-dim" />}
                     </div>
                   </button>
@@ -343,20 +384,20 @@ export default function S2BucketOverview() {
                             <div key={item.id} className="flex items-start justify-between px-4 py-3">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <p className="text-[#E0E0E0]" style={{ fontSize: 'var(--font-size-body)' }}>{item.name}</p>
+                                  <p className="text-main" style={{ fontSize: 'var(--font-size-body)' }}>{item.name}</p>
                                   {item.bondRatioMissing && (
-                                    <span className="text-amber-600 bg-amber-900/30 border border-amber-800/30 px-1.5 py-0.5 rounded" style={{ fontSize: 'var(--font-size-label)' }}>⚠️ 資料待補</span>
+                                    <span className="text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-label">⚠️ 資料待補</span>
                                   )}
                                   {hasOverride && (
-                                    <span className="text-blue-600 bg-blue-50 border border-blue-800/30 px-1.5 py-0.5 rounded" style={{ fontSize: 'var(--font-size-label)' }}>已手動調整</span>
+                                    <span className="text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded text-label">已手動調整</span>
                                   )}
                                 </div>
-                                <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>{item.reason}</p>
+                                <p className="text-dim mt-0.5 text-label">{item.reason}</p>
                               </div>
                               <div className="flex items-center gap-3 ml-3 shrink-0">
                                 <div className="text-right">
-                                  <p className="font-semibold text-[#E0E0E0]" style={{ fontSize: 'var(--font-size-body)' }}>{fmtTWD(item.value, true)}</p>
-                                  <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>
+                                  <p className="font-semibold text-main" style={{ fontSize: 'var(--font-size-body)' }}>{fmtTWD(item.value, true)}</p>
+                                  <p className="text-dim text-label">
                                     {totalInvestable > 0 ? ((item.value / totalInvestable) * 100).toFixed(1) : 0}%
                                   </p>
                                 </div>
@@ -398,9 +439,9 @@ export default function S2BucketOverview() {
         </Card>
 
         {/* 三桶金說明 */}
-        <div className="bg-blue-900/20 rounded-2xl p-5 border border-blue-800/30">
-          <h3 className="text-sm font-semibold text-blue-200 mb-3">📦 三桶金歸桶邏輯</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-blue-300" style={{ fontSize: 'var(--font-size-label)' }}>
+        <div className="bg-blue-50 rounded-2xl p-5 border border-blue-200">
+          <h3 className="text-sm font-semibold text-blue-700 mb-3">📦 三桶金歸桶邏輯</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-blue-700 text-label">
             <div>
               <p className="font-semibold mb-1">🔵 短期桶</p>
               <p>現金、活存、定存</p>

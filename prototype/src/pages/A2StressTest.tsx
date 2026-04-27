@@ -3,61 +3,9 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { ShieldAlert, Zap } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { PageHeader, Card, StatCard, fmtTWD } from '../components/Layout'
-
-// 簡化版 Monte Carlo（1000 次模擬，前端執行）
-function runMonteCarlo(
-  initialAssets: number,
-  annualExpense: number,
-  inflationRate: number,
-  meanReturn: number,
-  stdDev: number,
-  retirementYears: number,
-  simCount: number = 1000
-): { successRate: number; trajectories: number[][]; percentiles: number[] } {
-  const results: number[][] = []
-  let successCount = 0
-
-  function normalRandom(): number {
-    let u = 0, v = 0
-    while (u === 0) u = Math.random()
-    while (v === 0) v = Math.random()
-    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)
-  }
-
-  for (let sim = 0; sim < simCount; sim++) {
-    let assets = initialAssets
-    const trajectory: number[] = [assets]
-
-    for (let year = 0; year < retirementYears; year++) {
-      const yearReturn = meanReturn / 100 + (stdDev / 100) * normalRandom()
-      const expense = annualExpense * Math.pow(1 + inflationRate / 100, year)
-      assets = assets * (1 + yearReturn) - expense
-      trajectory.push(Math.max(assets, 0))
-      if (assets <= 0) break
-    }
-
-    results.push(trajectory)
-    if (assets > 0) successCount++
-  }
-
-  const successRate = (successCount / simCount) * 100
-
-  const finalAssets = results.map(t => t[t.length - 1] || 0).sort((a, b) => a - b)
-  const percentileTrajectories: number[] = []
-  for (const p of [75, 50, 25, 5]) {
-    const idx = Math.floor((p / 100) * finalAssets.length)
-    percentileTrajectories.push(finalAssets[idx] || 0)
-  }
-
-  const sampledTrajectories = [75, 50, 25, 5].map(p => {
-    const sorted = results.map((t, i) => ({ final: t[t.length - 1] || 0, i }))
-      .sort((a, b) => b.final - a.final)
-    const idx = Math.floor(((100 - p) / 100) * sorted.length)
-    return results[sorted[idx]?.i || 0] || []
-  })
-
-  return { successRate, trajectories: sampledTrajectories, percentiles: percentileTrajectories }
-}
+import CourseBadge from '../components/CourseBadge'
+import { runMonteCarlo } from '../utils/monteCarlo'
+import { useMarkVisited } from '../hooks/useMarkVisited'
 
 const SCENARIOS = [
   { key: 'base',      label: '基準情境',   icon: '📊', desc: '預設參數' },
@@ -67,6 +15,8 @@ const SCENARIOS = [
 ]
 
 export default function A2StressTest() {
+  useMarkVisited('a2')
+
   const { data, saveStressTestResult } = useStore()
   const s = calcSummary(data)
 
@@ -101,11 +51,40 @@ export default function A2StressTest() {
   const totalRetirementYears = baseRetirementYears + retirementYearsExtra
 
   const result = useMemo(() => {
-    return runMonteCarlo(initialAssets, annualExpense, inflationRate, meanReturn, stdDev, totalRetirementYears, 1000)
+    return runMonteCarlo({
+      initialAssets, annualExpense, inflationRate, meanReturn, stdDev,
+      retirementYears: totalRetirementYears,
+      retirementAge: data.retirementAge,
+      simCount: 1000,
+    })
+  }, [initialAssets, annualExpense, inflationRate, meanReturn, stdDev, totalRetirementYears, data.retirementAge])
+
+  // 三風險單因子敏感度（擾動參數後重跑 300 次，取成功率）
+  const sensitivity = useMemo(() => {
+    const runSmall = (
+      initAssets: number, annExp: number, infl: number, meanR: number, sd: number, years: number,
+    ) => runMonteCarlo({
+      initialAssets: initAssets, annualExpense: annExp, inflationRate: infl,
+      meanReturn: meanR, stdDev: sd, retirementYears: years, simCount: 300,
+    }).successRate
+
+    const base = runSmall(initialAssets, annualExpense, inflationRate, meanReturn, stdDev, totalRetirementYears)
+    const infl = runSmall(initialAssets, annualExpense, inflationRate + 1, meanReturn, stdDev, totalRetirementYears)
+    const life = runSmall(initialAssets, annualExpense, inflationRate, meanReturn, stdDev, totalRetirementYears + 5)
+    const exp  = runSmall(initialAssets, annualExpense * 1.2, inflationRate, meanReturn, stdDev, totalRetirementYears)
+
+    const items = [
+      { key: 'inflation', label: '通膨 +1%',        icon: '📈', rate: infl, delta: infl - base, hint: '通膨每年加快 1% 對成功率的衝擊' },
+      { key: 'longevity', label: '壽命 +5 年',      icon: '🧓', rate: life, delta: life - base, hint: '多活 5 年要多撐 5 年資產' },
+      { key: 'expense',   label: '醫療/支出 +20%',  icon: '💊', rate: exp,  delta: exp - base,  hint: '退休月支出 +20%（例如長期照護）' },
+    ]
+    const worst = items.reduce((a, b) => (b.delta < a.delta ? b : a), items[0])
+    return { base, items, worstKey: worst.key }
   }, [initialAssets, annualExpense, inflationRate, meanReturn, stdDev, totalRetirementYears])
 
   const chartData = useMemo(() => {
-    const maxLen = result.trajectories[0]?.length ?? 0
+    // 固定長度：retirementYears + 1（涵蓋退休年齡起完整年數），不受單一軌跡破產影響
+    const maxLen = totalRetirementYears + 1
     return Array.from({ length: maxLen }, (_, i) => ({
       age: data.retirementAge + i,
       'PR75（樂觀）': Math.round((result.trajectories[0]?.[i] ?? 0) / 10000),
@@ -113,7 +92,7 @@ export default function A2StressTest() {
       'PR25（保守）': Math.round((result.trajectories[2]?.[i] ?? 0) / 10000),
       'PR5（悲觀）':  Math.round((result.trajectories[3]?.[i] ?? 0) / 10000),
     }))
-  }, [result, data.retirementAge])
+  }, [result, data.retirementAge, totalRetirementYears])
 
   const successEmoji = result.successRate >= 90 ? '🟢' : result.successRate >= 75 ? '🟡' : '🔴'
   const lifeExpected = data.retirementAge + totalRetirementYears
@@ -185,7 +164,7 @@ export default function A2StressTest() {
             <div className="text-left md:text-right">
               <div className="space-y-1">
                 {['PR75', 'PR50', 'PR25', 'PR5'].map((label, i) => (
-                  <div key={label} style={{ fontSize: 'var(--font-size-label)' }}>
+                  <div key={label} className="text-label">
                     <span className="text-dim">{label} 最終資產：</span>
                     <span className="font-semibold text-main">{fmtTWD(result.percentiles[i] || 0, true)}</span>
                   </div>
@@ -199,25 +178,70 @@ export default function A2StressTest() {
               style={{ width: `${result.successRate}%` }}
             />
           </div>
-          <div className="flex justify-between mt-1 text-dim" style={{ fontSize: 'var(--font-size-label)' }}>
+          <div className="flex justify-between mt-1 text-dim text-label">
             <span>0%</span><span className="text-amber-600 font-medium">75% 警戒線</span><span className="text-green-600 font-medium">90% 安全線</span><span>100%</span>
           </div>
         </div>
+
+        {/* 三風險單因子敏感度（CH2） */}
+        <Card className="p-3 relative">
+          <CourseBadge ch="CH2" variant="absolute" />
+          <h3 className="text-sm font-semibold text-main mb-2 pr-12">🔬 三大風險敏感度</h3>
+          <p className="text-dim mb-3 text-label">
+            以目前成功率為基準（{sensitivity.base.toFixed(0)}%），逐一放大單一因子，看哪種風險對你衝擊最大。
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {sensitivity.items.map(item => {
+              const isWorst = item.key === sensitivity.worstKey && item.delta < 0
+              const deltaColor = item.delta < -5 ? 'text-red-600' : item.delta < 0 ? 'text-amber-600' : 'text-green-600'
+              return (
+                <div
+                  key={item.key}
+                  className={`rounded-xl p-3 border-2 ${
+                    isWorst ? 'border-red-500 bg-red-500/10' : 'border-base bg-elevated'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <span className="text-lg mr-1">{item.icon}</span>
+                      <span className="text-xs font-semibold text-main">{item.label}</span>
+                    </div>
+                    {isWorst && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-red-500 text-white">
+                        最需留意
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl font-bold text-main">{item.rate.toFixed(0)}%</span>
+                    <span className={`text-xs font-semibold ${deltaColor}`}>
+                      {item.delta >= 0 ? '+' : ''}{item.delta.toFixed(1)}%
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-faint mt-1 leading-relaxed">{item.hint}</p>
+                </div>
+              )
+            })}
+          </div>
+          <p className="text-[10px] text-faint mt-3">
+            此為單因子敏感度，實際風險會交互作用（如通膨 + 長壽同時發生衝擊更大）。
+          </p>
+        </Card>
 
         {/* 參數設定 */}
         <Card className="p-3">
           <h3 className="text-sm font-semibold text-main mb-3">模擬參數微調</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
-              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
-                退休初始資產：<strong className="text-main">{fmtTWD(initialAssets, true)}</strong>
+              <label className="text-dim mb-1 block text-label">
+                退休初始資產<span className="text-[9px]">（不含房屋）</span>：<strong className="text-main">{fmtTWD(initialAssets, true)}</strong>
               </label>
               <input type="range" min={1000000} max={50000000} step={500000}
                 value={initialAssets} onChange={e => handleSliderChange(setInitialAssets, Number(e.target.value))}
                 className="w-full" />
             </div>
             <div>
-              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+              <label className="text-dim mb-1 block text-label">
                 年支出（扣被動收入後）：<strong className="text-main">{fmtTWD(annualExpense, true)}</strong>
               </label>
               <input type="range" min={240000} max={3600000} step={12000}
@@ -225,7 +249,7 @@ export default function A2StressTest() {
                 className="w-full" />
             </div>
             <div>
-              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+              <label className="text-dim mb-1 block text-label">
                 通膨率：<strong className="text-main">{inflationRate}%</strong>
               </label>
               <input type="range" min={1} max={5} step={0.5}
@@ -233,7 +257,7 @@ export default function A2StressTest() {
                 className="w-full" />
             </div>
             <div>
-              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+              <label className="text-dim mb-1 block text-label">
                 平均年報酬率：<strong className="text-main">{meanReturn}%</strong>
               </label>
               <input type="range" min={1} max={10} step={0.5}
@@ -241,22 +265,22 @@ export default function A2StressTest() {
                 className="w-full" />
             </div>
             <div>
-              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+              <label className="text-dim mb-1 block text-label">
                 報酬率標準差（波動）：<strong className="text-main">{stdDev}%</strong>
               </label>
               <input type="range" min={3} max={25} step={1}
                 value={stdDev} onChange={e => handleSliderChange(setStdDev, Number(e.target.value))}
                 className="w-full" />
-              <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>保守組合 ~8%，全股票 ~18%</p>
+              <p className="text-dim mt-0.5 text-label">保守組合 ~8%，全股票 ~18%</p>
             </div>
             <div>
-              <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+              <label className="text-dim mb-1 block text-label">
                 額外模擬年數：<strong className="text-main">+{retirementYearsExtra} 年</strong>
               </label>
               <input type="range" min={0} max={20} step={5}
                 value={retirementYearsExtra} onChange={e => handleSliderChange(setRetirementYearsExtra, Number(e.target.value))}
                 className="w-full" />
-              <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>模擬至 {lifeExpected} 歲</p>
+              <p className="text-dim mt-0.5 text-label">模擬至 {lifeExpected} 歲</p>
             </div>
           </div>
         </Card>
@@ -276,19 +300,37 @@ export default function A2StressTest() {
         {/* 圖表 */}
         <Card className="p-3">
           <h3 className="text-sm font-semibold text-main mb-1">資產路徑分布（4 種情境）</h3>
-          <p className="text-dim mb-3" style={{ fontSize: 'var(--font-size-label)' }}>每次調整參數後即時重新模擬</p>
+          <p className="text-dim mb-3 text-label">每次調整參數後即時重新模擬</p>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-              <XAxis dataKey="age" tickFormatter={v => `${v}歲`} tick={{ fill: '#A0A0A0', fontSize: 11 }} />
-              <YAxis tickFormatter={v => `${v}萬`} width={60} tick={{ fill: '#A0A0A0' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E5EA" />
+              <XAxis dataKey="age" tickFormatter={v => `${v}歲`} tick={{ fill: '#6C6C70', fontSize: 11 }} />
+              <YAxis tickFormatter={v => `${v}萬`} width={60} tick={{ fill: '#6C6C70' }} />
               <Tooltip
                 labelFormatter={(l: any) => `${l} 歲`}
                 formatter={(v: any) => `${Number(v).toLocaleString()} 萬`}
-                contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+                contentStyle={{ background: '#FFFFFF', border: '1px solid #C6C6C8', color: '#1C1C1E' }}
               />
-              <Legend wrapperStyle={{ color: '#D4D4D4' }} />
+              <Legend wrapperStyle={{ color: '#3C3C43' }} />
               <ReferenceLine y={0} stroke="#ef4444" strokeWidth={2} label={{ value: '資產歸零', position: 'right', fontSize: 11, fill: '#ef4444' }} />
+              {result.bankruptAges.pr25 !== undefined && (
+                <ReferenceLine
+                  x={result.bankruptAges.pr25}
+                  stroke="#f59e0b"
+                  strokeDasharray="4 3"
+                  strokeWidth={1.5}
+                  label={{ value: `保守 ${result.bankruptAges.pr25}歲破產`, position: 'insideTop', fontSize: 10, fill: '#f59e0b' }}
+                />
+              )}
+              {result.bankruptAges.pr5 !== undefined && (
+                <ReferenceLine
+                  x={result.bankruptAges.pr5}
+                  stroke="#ef4444"
+                  strokeDasharray="4 3"
+                  strokeWidth={1.5}
+                  label={{ value: `悲觀 ${result.bankruptAges.pr5}歲破產`, position: 'insideBottom', fontSize: 10, fill: '#ef4444' }}
+                />
+              )}
               <Area type="monotone" dataKey="PR75（樂觀）" stroke="#22c55e" fill="#dcfce7" strokeWidth={2} dot={false} />
               <Area type="monotone" dataKey="PR50（中位）" stroke="#3b82f6" fill="#dbeafe" strokeWidth={2} dot={false} />
               <Area type="monotone" dataKey="PR25（保守）" stroke="#f59e0b" fill="#fef3c7" strokeWidth={2} dot={false} />
@@ -298,7 +340,7 @@ export default function A2StressTest() {
         </Card>
 
         {/* 說明 */}
-        <div className="bg-elevated rounded-xl p-3 text-dim" style={{ fontSize: 'var(--font-size-label)' }}>
+        <div className="bg-elevated rounded-xl p-3 text-dim text-label">
           <p className="font-medium text-main mb-1">關於 Monte Carlo 模擬</p>
           <p>本工具執行 1,000 次模擬，每次使用常態分布隨機產生報酬率（平均值 ± 標準差），模擬市場波動。成功率 = 活到預期壽命時資產仍大於 0 的比例。建議目標成功率 ≥ 90%。</p>
         </div>

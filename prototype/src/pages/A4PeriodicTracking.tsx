@@ -3,8 +3,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { History, Camera, Trash2 } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { PageHeader, Card, StatCard, fmtTWD } from '../components/Layout'
+import { useMarkVisited } from '../hooks/useMarkVisited'
 
 export default function A4PeriodicTracking() {
+  useMarkVisited('a4')
+
   const { data, snapshots, addSnapshot } = useStore()
   const s = calcSummary(data)
   const [label, setLabel] = useState('')
@@ -50,8 +53,8 @@ export default function A4PeriodicTracking() {
         <Card className="p-3">
           <h3 className="text-sm font-semibold text-main mb-3">目前財務快照（來自 S1）</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-            <StatCard label="總資產" value={fmtTWD(s.totalAssets, true)} color="blue" />
-            <StatCard label="可投資資產" value={fmtTWD(s.investableAssets, true)} color="purple" />
+            <StatCard label="總資產" value={fmtTWD(s.totalAssets, true)} sub="含房屋" color="blue" />
+            <StatCard label="可投資資產" value={fmtTWD(s.investableAssets, true)} sub="不含房屋" color="purple" />
             <StatCard label="短期桶" value={fmtTWD(s.shortBucket, true)} color="blue" />
             <StatCard label="中期桶" value={fmtTWD(s.midBucket, true)} color="purple" />
             <StatCard label="長期桶" value={fmtTWD(s.longBucket, true)} color="amber" />
@@ -73,7 +76,7 @@ export default function A4PeriodicTracking() {
               {saved ? '已儲存 ✓' : '記錄快照'}
             </button>
           </div>
-          <p className="text-dim mt-2" style={{ fontSize: 'var(--font-size-label)' }}>快照採 Append-only，不覆蓋歷史紀錄</p>
+          <p className="text-dim mt-2 text-label">快照採 Append-only，不覆蓋歷史紀錄</p>
         </Card>
 
         {/* 與上期比較 */}
@@ -111,14 +114,14 @@ export default function A4PeriodicTracking() {
               <h3 className="text-sm font-semibold text-main mb-3">總資產 / 可投資資產趨勢</h3>
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-                  <XAxis dataKey="date" tick={{ fill: '#A0A0A0', fontSize: 11 }} />
-                  <YAxis tickFormatter={v => `${v}萬`} tick={{ fill: '#A0A0A0' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E5EA" />
+                  <XAxis dataKey="date" tick={{ fill: '#6C6C70', fontSize: 11 }} />
+                  <YAxis tickFormatter={v => `${v}萬`} tick={{ fill: '#6C6C70' }} />
                   <Tooltip
                     formatter={(v: any) => `${Number(v).toLocaleString()} 萬`}
-                    contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+                    contentStyle={{ background: '#FFFFFF', border: '1px solid #C6C6C8', color: '#1C1C1E' }}
                   />
-                  <Legend wrapperStyle={{ color: '#D4D4D4' }} />
+                  <Legend wrapperStyle={{ color: '#3C3C43' }} />
                   <Line type="monotone" dataKey="總資產" stroke="#3b82f6" strokeWidth={2} dot />
                   <Line type="monotone" dataKey="可投資資產" stroke="#8b5cf6" strokeWidth={2} dot />
                 </LineChart>
@@ -129,14 +132,14 @@ export default function A4PeriodicTracking() {
               <h3 className="text-sm font-semibold text-main mb-3">三桶金趨勢</h3>
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-                  <XAxis dataKey="date" tick={{ fill: '#A0A0A0', fontSize: 11 }} />
-                  <YAxis tickFormatter={v => `${v}萬`} tick={{ fill: '#A0A0A0' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E5EA" />
+                  <XAxis dataKey="date" tick={{ fill: '#6C6C70', fontSize: 11 }} />
+                  <YAxis tickFormatter={v => `${v}萬`} tick={{ fill: '#6C6C70' }} />
                   <Tooltip
                     formatter={(v: any) => `${Number(v).toLocaleString()} 萬`}
-                    contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+                    contentStyle={{ background: '#FFFFFF', border: '1px solid #C6C6C8', color: '#1C1C1E' }}
                   />
-                  <Legend wrapperStyle={{ color: '#D4D4D4' }} />
+                  <Legend wrapperStyle={{ color: '#3C3C43' }} />
                   <Line type="monotone" dataKey="短期桶" stroke="#3b82f6" strokeWidth={2} dot />
                   <Line type="monotone" dataKey="中期桶" stroke="#8b5cf6" strokeWidth={2} dot />
                   <Line type="monotone" dataKey="長期桶" stroke="#f97316" strokeWidth={2} dot />
@@ -154,20 +157,20 @@ export default function A4PeriodicTracking() {
         <Card className="p-3">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-main">快照歷史記錄</h3>
-            <span className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>{snapshots.length} 筆</span>
+            <span className="text-dim text-label">{snapshots.length} 筆</span>
           </div>
 
           {snapshots.length === 0 ? (
             <div className="text-center py-10 text-dim">
               <Camera size={32} className="mx-auto mb-3 opacity-30" />
               <p style={{ fontSize: 'var(--font-size-body)' }}>尚未記錄任何快照</p>
-              <p className="mt-1" style={{ fontSize: 'var(--font-size-label)' }}>點擊上方「記錄快照」開始追蹤</p>
+              <p className="mt-1 text-label">點擊上方「記錄快照」開始追蹤</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full" style={{ fontSize: 'var(--font-size-body)' }}>
                 <thead>
-                  <tr className="border-b border-base" style={{ fontSize: 'var(--font-size-label)' }}>
+                  <tr className="border-b border-base text-label">
                     <th className="text-left py-2 px-3 text-dim font-medium">日期</th>
                     <th className="text-left py-2 px-3 text-dim font-medium">備註</th>
                     <th className="text-right py-2 px-3 text-dim font-medium">總資產</th>
@@ -196,7 +199,7 @@ export default function A4PeriodicTracking() {
                         </td>
                         <td className="py-2.5 px-3 text-right text-blue-600">{fmtTWD(snap.shortBucket, true)}</td>
                         <td className="py-2.5 px-3 text-right text-purple-600">{fmtTWD(snap.midBucket, true)}</td>
-                        <td className="py-2.5 px-3 text-right text-orange-400">{fmtTWD(snap.longBucket, true)}</td>
+                        <td className="py-2.5 px-3 text-right text-orange-600">{fmtTWD(snap.longBucket, true)}</td>
                         <td className="py-2.5 px-3">
                           <button className="text-dim hover:text-red-600 transition-colors" title="快照為 append-only，僅供展示">
                             <Trash2 size={13} />
@@ -213,8 +216,8 @@ export default function A4PeriodicTracking() {
 
         {/* 操作建議 */}
         <div className="bg-green-50 rounded-2xl p-4 border border-green-200">
-          <h3 className="text-sm font-semibold text-green-200 mb-2">📅 定期追蹤建議</h3>
-          <div className="text-green-300 space-y-1" style={{ fontSize: 'var(--font-size-label)' }}>
+          <h3 className="text-sm font-semibold text-green-700 mb-2">📅 定期追蹤建議</h3>
+          <div className="text-green-700 space-y-1 text-label">
             <p>• <strong>頻率</strong>：建議每季（3個月）記錄一次，不需要太頻繁</p>
             <p>• <strong>時機</strong>：薪資入帳後、年終後、重大資產變化後</p>
             <p>• <strong>目標</strong>：觀察可投資資產是否持續成長，三桶金比例是否符合目標</p>

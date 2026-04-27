@@ -3,8 +3,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Wallet } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { PageHeader, Card, StatCard, fmtTWD } from '../components/Layout'
+import { useMarkVisited } from '../hooks/useMarkVisited'
 
 export default function B1WithdrawalPlan() {
+  useMarkVisited('b1')
+
   const { data } = useStore()
   const s = calcSummary(data)
 
@@ -71,9 +74,9 @@ export default function B1WithdrawalPlan() {
               </div>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>提領期間目標</p>
+              <p className="text-dim text-label">提領期間目標</p>
               <p className="font-bold text-main" style={{ fontSize: '16px' }}>{data.retirementAge} ~ {data.expectedLifespan} 歲</p>
-              <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>{retirementMonths} 個月</p>
+              <p className="text-dim text-label">{retirementMonths} 個月</p>
             </div>
           </div>
         </div>
@@ -98,7 +101,7 @@ export default function B1WithdrawalPlan() {
         {/* 月支出滑桿 */}
         <Card className="p-3">
           <h3 className="text-sm font-semibold text-main mb-3">月支出調整（即時更新各桶支撐時間）</h3>
-          <label className="text-dim mb-1 block" style={{ fontSize: 'var(--font-size-label)' }}>
+          <label className="text-dim mb-1 block text-label">
             月支出假設：<strong>{fmtTWD(monthlyExpenseAdj, true)}</strong>
             <span className="ml-2 text-dim">（S1 原始值：{fmtTWD(s.monthlyExpense, true)}）</span>
           </label>
@@ -109,7 +112,7 @@ export default function B1WithdrawalPlan() {
             onChange={e => setMonthlyExpenseAdj(Number(e.target.value))}
             className="w-full"
           />
-          <div className="flex justify-between text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}>
+          <div className="flex justify-between text-dim mt-1 text-label">
             <span>1萬</span><span>10萬</span><span>20萬</span>
           </div>
         </Card>
@@ -118,15 +121,15 @@ export default function B1WithdrawalPlan() {
         {!noGap && (
           <Card className="p-3">
             <h3 className="text-sm font-semibold text-main mb-1">各桶可支撐月數</h3>
-            <p className="text-dim mb-3" style={{ fontSize: 'var(--font-size-label)' }}>紅色虛線 = 退休期間目標（{retirementMonths} 個月）</p>
+            <p className="text-dim mb-3 text-label">紅色虛線 = 退休期間目標（{retirementMonths} 個月）</p>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={chartData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-                <XAxis type="number" tickFormatter={v => `${v}月`} tick={{ fill: '#A0A0A0', fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" width={55} tick={{ fill: '#A0A0A0' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E5EA" />
+                <XAxis type="number" tickFormatter={v => `${v}月`} tick={{ fill: '#6C6C70', fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" width={55} tick={{ fill: '#6C6C70' }} />
                 <Tooltip
                   formatter={(v: any) => [`${v} 個月（約 ${(v / 12).toFixed(1)} 年）`, '可支撐']}
-                  contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+                  contentStyle={{ background: '#FFFFFF', border: '1px solid #C6C6C8', color: '#1C1C1E' }}
                 />
                 <ReferenceLine x={retirementMonths} stroke="#ef4444" strokeDasharray="5 5"
                   label={{ value: `目標 ${retirementMonths}月`, position: 'top', fontSize: 11, fill: '#EF4444' }} />
@@ -175,8 +178,8 @@ export default function B1WithdrawalPlan() {
               <div key={i} className="flex items-start justify-between bg-elevated rounded-xl p-3">
                 <div>
                   <p className="font-semibold text-main" style={{ fontSize: 'var(--font-size-body)' }}>{b.label}</p>
-                  <p className="text-dim mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>{b.desc}</p>
-                  <p className="text-dim mt-1" style={{ fontSize: 'var(--font-size-label)' }}>金額：{fmtTWD(b.amount, true)}</p>
+                  <p className="text-dim mt-0.5 text-label">{b.desc}</p>
+                  <p className="text-dim mt-1 text-label">金額：{fmtTWD(b.amount, true)}</p>
                 </div>
                 <div className="text-right">
                   {noGap ? (
@@ -186,7 +189,7 @@ export default function B1WithdrawalPlan() {
                       <p className="font-bold text-main" style={{ fontSize: 'var(--font-size-body)' }}>
                         {Math.floor(b.months / 12)} 年 {Math.floor(b.months % 12)} 月
                       </p>
-                      <p className="text-dim" style={{ fontSize: 'var(--font-size-label)' }}>
+                      <p className="text-dim text-label">
                         耗盡於 {ageLabel(b.months, (b as any).prevMonths ?? 0)}
                       </p>
                     </>
@@ -200,7 +203,7 @@ export default function B1WithdrawalPlan() {
         </Card>
 
         {/* 說明 */}
-        <div className="bg-blue-50 rounded-xl p-3 text-blue-700" style={{ fontSize: 'var(--font-size-label)' }}>
+        <div className="bg-blue-50 rounded-xl p-3 text-blue-700 text-label">
           <p className="font-semibold mb-1">📌 計算說明</p>
           <p>本試算採線性計算（不含投資增長），為保守估計。實際資產可能因投資報酬而持續增長，建議搭配 A2 壓力測試綜合評估。</p>
         </div>

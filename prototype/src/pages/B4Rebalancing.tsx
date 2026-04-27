@@ -2,6 +2,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { RefreshCw } from 'lucide-react'
 import { useStore, calcSummary } from '../store/useStore'
 import { PageHeader, Card, fmtTWD } from '../components/Layout'
+import { useMarkVisited } from '../hooks/useMarkVisited'
 
 // B4 建議比例（已退休用 15/45/40，退休前沿用 A3 生命週期）
 function getWithdrawalAllocation(yearsToRetire: number) {
@@ -15,6 +16,8 @@ function getWithdrawalAllocation(yearsToRetire: number) {
 const TOLERANCE = 5  // 容忍區間 %
 
 export default function B4Rebalancing() {
+  useMarkVisited('b4')
+
   const { data } = useStore()
   const s = calcSummary(data)
 
@@ -103,11 +106,11 @@ export default function B4Rebalancing() {
         <div className="bg-gradient-to-r from-teal-600 to-cyan-600 rounded-2xl p-4 text-main">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-teal-200 mb-1" style={{ fontSize: 'var(--font-size-label)' }}>目前所在階段</p>
+              <p className="text-teal-200 mb-1 text-label">目前所在階段</p>
               <h2 className="font-bold" style={{ fontSize: '18px' }}>{suggested.label}</h2>
             </div>
             <div className="text-right">
-              <p className="text-teal-200" style={{ fontSize: 'var(--font-size-label)' }}>距退休</p>
+              <p className="text-teal-200 text-label">距退休</p>
               <p className="font-bold" style={{ fontSize: '20px' }}>{yearsToRetire > 0 ? `${yearsToRetire} 年` : '已退休'}</p>
             </div>
           </div>
@@ -118,9 +121,9 @@ export default function B4Rebalancing() {
               { label: '長期桶', sug: suggested.long,  cur: currentLongPct  },
             ].map(b => (
               <div key={b.label} className="bg-white/20 rounded-xl p-3">
-                <p className="text-teal-200" style={{ fontSize: 'var(--font-size-label)' }}>{b.label}</p>
+                <p className="text-teal-200 text-label">{b.label}</p>
                 <p className="font-bold" style={{ fontSize: '15px' }}>建議 {b.sug}%</p>
-                <p className="text-teal-300" style={{ fontSize: 'var(--font-size-label)' }}>目前 {b.cur.toFixed(0)}%</p>
+                <p className="text-teal-300 text-label">目前 {b.cur.toFixed(0)}%</p>
               </div>
             ))}
           </div>
@@ -131,19 +134,19 @@ export default function B4Rebalancing() {
           <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 flex items-center gap-3">
             <span className="text-3xl">🟢</span>
             <div>
-              <p className="font-bold text-green-200">配置平衡，暫無需再平衡</p>
-              <p className="text-green-600 mt-0.5" style={{ fontSize: 'var(--font-size-label)' }}>各桶偏差均在 {TOLERANCE}% 容忍區間內</p>
+              <p className="font-bold text-green-700">配置平衡，暫無需再平衡</p>
+              <p className="text-green-600 mt-0.5 text-label">各桶偏差均在 {TOLERANCE}% 容忍區間內</p>
             </div>
           </div>
         ) : (
           <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-2xl">⚖️</span>
-              <p className="font-bold text-amber-200">建議進行再平衡</p>
+              <p className="font-bold text-amber-700">建議進行再平衡</p>
             </div>
             <div className="space-y-2">
               {steps.map((step, i) => (
-                <div key={i} className="flex items-start gap-2 text-amber-300" style={{ fontSize: 'var(--font-size-body)' }}>
+                <div key={i} className="flex items-start gap-2 text-amber-700" style={{ fontSize: 'var(--font-size-body)' }}>
                   <span className="font-bold shrink-0">{i + 1}.</span>
                   <span>{step}</span>
                 </div>
@@ -157,14 +160,14 @@ export default function B4Rebalancing() {
           <h3 className="text-sm font-semibold text-main mb-3">目前 vs 建議比例（偏差 &gt; {TOLERANCE}% 標示）</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={barData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-              <XAxis type="number" tickFormatter={v => `${v}%`} domain={[0, 100]} tick={{ fill: '#A0A0A0', fontSize: 11 }} />
-              <YAxis type="category" dataKey="name" width={55} tick={{ fill: '#A0A0A0' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E5EA" />
+              <XAxis type="number" tickFormatter={v => `${v}%`} domain={[0, 100]} tick={{ fill: '#6C6C70', fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" width={55} tick={{ fill: '#6C6C70' }} />
               <Tooltip
                 formatter={(v: any) => `${v}%`}
-                contentStyle={{ background: '#202020', border: '1px solid #2A2A2A', color: '#E5E5E5' }}
+                contentStyle={{ background: '#FFFFFF', border: '1px solid #C6C6C8', color: '#1C1C1E' }}
               />
-              <Legend wrapperStyle={{ color: '#D4D4D4' }} />
+              <Legend wrapperStyle={{ color: '#3C3C43' }} />
               <Bar dataKey="目前" radius={[0, 4, 4, 0]}>
                 {barData.map((entry, i) => (
                   <Cell key={i} fill={entry.isOver ? '#ef4444' : entry.color} />
@@ -173,7 +176,7 @@ export default function B4Rebalancing() {
               <Bar dataKey="建議" fill="#3A3A3A" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
-          <p className="text-dim mt-2 text-center" style={{ fontSize: 'var(--font-size-label)' }}>紅色 = 偏差超過容忍區間（±{TOLERANCE}%）</p>
+          <p className="text-dim mt-2 text-center text-label">紅色 = 偏差超過容忍區間（±{TOLERANCE}%）</p>
         </Card>
 
         {/* 各桶明細 */}
